@@ -8,7 +8,9 @@ import (
 // FlowHint is what the desktop knows about the process that opened a flow.
 // OnBytes may sleep to apply a per-app limit. It must not call back into the scheduler.
 type FlowHint struct {
-	OnOpen func(adapter string) func()
+	Trace         func(SelectionTrace)
+	TransferTrace func(TransferTrace)
+	OnOpen        func(adapter string) func()
 
 	Name, Path string
 	Known      bool

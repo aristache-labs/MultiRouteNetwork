@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"sync"
 
@@ -12,6 +13,8 @@ import (
 // slotConn counts a pinned TCP flow's bytes and releases its slot on Close. It exposes
 // CloseRead/CloseWrite because the TUN relay half-closes each direction separately.
 type slotConn struct {
+	transfer  *transferMeter
+	closeErr  error
 	closeOnce sync.Once
 	onClose   func()
 
@@ -25,14 +28,18 @@ type slotConn struct {
 	stop     func() bool
 }
 
-func (c *slotConn) Read(p []byte) (int, error) {
+func (c *slotConn) Read(p []byte) (n int, err error) {
 	if c.stop != nil && c.stop() {
 		return 0, errors.New("data cap reached")
 	}
 	if pair := c.sl.limit.Load(); pair != nil && len(p) > pair.chunk {
 		p = p[:pair.chunk] // hand out a chunk at a time, so a limited flow stays smooth
 	}
-	n, err := c.TCPConn.Read(p)
+	traced := c.transfer.begin()
+	n, err = c.TCPConn.Read(p)
+	if traced {
+		c.transfer.end(true, n, err)
+	}
 	if n > 0 {
 		c.sl.bytesIn[c.fam].Add(int64(n))
 		if c.activity != nil {
@@ -46,11 +53,15 @@ func (c *slotConn) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func (c *slotConn) Write(p []byte) (int, error) {
+func (c *slotConn) Write(p []byte) (n int, err error) {
 	if c.stop != nil && c.stop() {
 		return 0, errors.New("data cap reached")
 	}
-	n, err := c.sl.writePaced(c.TCPConn, p, false)
+	var writer io.Writer = c.TCPConn
+	if c.transfer != nil {
+		writer = transferWriter{Writer: c.TCPConn, meter: c.transfer}
+	}
+	n, err = c.sl.writePaced(writer, p, false)
 	c.sl.bytesOut[c.fam].Add(int64(n))
 	if c.activity != nil {
 		c.activity.bytes.Add(int64(n))
@@ -73,14 +84,17 @@ func (c *slotConn) release() {
 
 func (c *slotConn) CloseRead() error  { c.release(); return c.TCPConn.CloseRead() }
 func (c *slotConn) CloseWrite() error { c.release(); return c.TCPConn.CloseWrite() }
-func (c *slotConn) Close() error {
-	c.release()
+func (c *slotConn) Close() error      { return c.CloseWithReason("local-close") }
+func (c *slotConn) CloseWithReason(reason string) error {
 	c.closeOnce.Do(func() {
+		c.closeErr = c.TCPConn.Close()
+		c.release()
+		c.transfer.finish(reason)
 		if c.onClose != nil {
 			c.onClose()
 		}
 	})
-	return c.TCPConn.Close()
+	return c.closeErr
 }
 
 // DialPinned is DialTCP for front-ends that hand the conn to someone else to pump.
@@ -94,10 +108,12 @@ func (b *Balancer) DialPinned(ctx context.Context, host string, port int) (net.C
 	if h.OnOpen != nil {
 		done = h.OnOpen(sl.Name)
 	}
-	return &slotConn{onClose: done, TCPConn: c.(*net.TCPConn), sl: sl, fam: f, s: b.S, activity: b.S.track(sl, f), onBytes: h.OnBytes, stop: h.Stop}, nil
+	return &slotConn{transfer: newTransferMeter(sl.Name, h.TransferTrace), onClose: done, TCPConn: c.(*net.TCPConn), sl: sl, fam: f, s: b.S, activity: b.S.track(sl, f), onBytes: h.OnBytes, stop: h.Stop}, nil
 }
 
 type slotPacketConn struct {
+	transfer  *transferMeter
+	closeErr  error
 	closeOnce sync.Once
 	onClose   func()
 
@@ -108,20 +124,27 @@ type slotPacketConn struct {
 	stop    func() bool
 }
 
-func (c *slotPacketConn) Close() error {
+func (c *slotPacketConn) Close() error { return c.CloseWithReason("local-close") }
+func (c *slotPacketConn) CloseWithReason(reason string) error {
 	c.closeOnce.Do(func() {
+		c.closeErr = c.PacketConn.Close()
+		c.transfer.finish(reason)
 		if c.onClose != nil {
 			c.onClose()
 		}
 	})
-	return c.PacketConn.Close()
+	return c.closeErr
 }
 
-func (c *slotPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
+func (c *slotPacketConn) ReadFrom(p []byte) (n int, a net.Addr, err error) {
 	if c.stop != nil && c.stop() {
 		return 0, nil, errors.New("data cap reached")
 	}
-	n, a, err := c.PacketConn.ReadFrom(p)
+	traced := c.transfer.begin()
+	n, a, err = c.PacketConn.ReadFrom(p)
+	if traced {
+		c.transfer.end(true, n, err)
+	}
 	if n > 0 {
 		c.sl.bytesIn[c.fam].Add(int64(n))
 		c.sl.throttlePacket(true, n)
@@ -132,12 +155,16 @@ func (c *slotPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
 	return n, a, err
 }
 
-func (c *slotPacketConn) WriteTo(p []byte, a net.Addr) (int, error) {
+func (c *slotPacketConn) WriteTo(p []byte, a net.Addr) (n int, err error) {
 	if c.stop != nil && c.stop() {
 		return 0, errors.New("data cap reached")
 	}
 	c.sl.throttlePacket(false, len(p))
-	n, err := c.PacketConn.WriteTo(p, a)
+	traced := c.transfer.begin()
+	n, err = c.PacketConn.WriteTo(p, a)
+	if traced {
+		c.transfer.end(false, n, err)
+	}
 	c.sl.bytesOut[c.fam].Add(int64(n))
 	if n > 0 && c.onBytes != nil {
 		c.onBytes(c.sl.Name, false, n, true)
@@ -176,6 +203,6 @@ func (b *Balancer) ListenUDP(ctx context.Context, f Family) (net.PacketConn, err
 		if h.OnOpen != nil {
 			done = h.OnOpen(sl.Name)
 		}
-		return &slotPacketConn{onClose: done, PacketConn: pc, sl: sl, fam: f, onBytes: h.OnBytes, stop: h.Stop}, nil
+		return &slotPacketConn{transfer: newTransferMeter(sl.Name, h.TransferTrace), onClose: done, PacketConn: pc, sl: sl, fam: f, onBytes: h.OnBytes, stop: h.Stop}, nil
 	}
 }

@@ -86,6 +86,45 @@ multiple adapters at once; this does not split a single TCP connection across li
 
 ## Build
 
+### Curl routing diagnostics
+
+The desktop engine writes identified `curl.exe` flow diagnostics to
+`curl-routing.jsonl` in the per-user state directory (normally
+`%LOCALAPPDATA%\net-merge`). The current file and one `.1` backup are each
+limited to 1 MiB. Writes run on a bounded background queue; `droppedBefore`
+reports queue overflow. No URLs, addresses, executable paths or payloads are logged.
+Unknown owners remain unknown and are not attributed to curl.
+
+`connection`, `pid` and `network` correlate `prepared`, `selection`, `opened`
+and `closed` events. Repeated selection events represent attempts/retries;
+`opened` confirms that the socket was actually opened. A selection alone does
+not prove a successful connection. Each selection includes all known scheduler
+adapters, their family-specific weight, active/busy load, health and cooldown.
+Scores are the exact `(load + 1) / weight` values used for eligible adapters.
+Reasons distinguish `not-present`, `no-family-address`, `retry-excluded`,
+`health-tier`, `policy-excluded`, `score-or-tie` and `selected`. The policy field
+identifies balance, pin, subset or block. Diagnostics run after unlocking the
+scheduler and do not change its choices, weights, tie-breaking or policies.
+
+Traced TCP/UDP sockets also emit `progress` once per second, including idle
+intervals, and exactly one `transfer-closed` summary. The nested `transfer`
+contains cumulative `downBytes`/`upBytes`, elapsed `durationMs`, interval rates
+`downBps`/`upBps` and lifetime average rates. All Bps fields are bytes/second;
+multiply by 8/1,000,000 for Mbit/s. These count socket payload bytes (including
+TLS records), not Ethernet/IP/TCP headers or retransmissions. Read/write terminal
+states are `eof`, `timeout`, `reset`, `closed`, `broken-pipe`, `error`, or
+`no-terminal-observed` when no terminal I/O result was seen. Close reasons are
+`local-close` or `capture-ended` (Stop/Exit). They describe socket observations,
+not HTTP/TLS success or whether curl hit its own command-line time limit.
+The final counters wait for interrupted socket I/O to return, but not for
+rate-limiter sleeps. Metrics do not change accounting or scheduler weights.
+
+To watch a test without starting another transfer:
+
+```powershell
+Get-Content "$env:LOCALAPPDATA\net-merge\curl-routing.jsonl" -Tail 20 -Wait
+```
+
 ### Windows pause and resume
 
 MultiRoute's Stop closes both ends of the current TCP/UDP flows and cancels pending

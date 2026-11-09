@@ -96,6 +96,7 @@ type Status struct {
 
 // Service is the shared controller for the tray, the CLI and the desktop window.
 type Service struct {
+	curlLog        *curlDiagnosticLog
 	adapterBuckets map[string]*bucket
 
 	sampleSeconds float64
@@ -235,9 +236,11 @@ func (s *Service) Prepare(network string, src, dst string, srcPort, dstPort int)
 	_ = dstPort
 	addr, err := netip.ParseAddr(src)
 	h := engine.FlowHint{}
+	var pid uint32
 	if err == nil {
 		p := procid.Lookup(network, addr, uint16(srcPort))
 		h.Name, h.Path, h.Known = p.Name, p.Path, p.Known
+		pid = p.PID
 	}
 	if !h.Known {
 		h.Name = "Unknown"
@@ -250,6 +253,7 @@ func (s *Service) Prepare(network string, src, dst string, srcPort, dstPort int)
 	}
 	name, path := h.Name, h.Path
 	h.OnOpen = func(adapter string) func() { return s.trackAdapter(name, adapter) }
+	s.traceCurl(&h, network, pid)
 	h.OnBytes = func(adapter string, down bool, n int, udp bool) {
 		s.account(name, path, adapter, rule, down, n, udp)
 	}
@@ -685,6 +689,9 @@ func (s *Service) Shutdown() {
 	s.mu.Unlock()
 	if closer, ok := sw.(interface{ Close() }); ok {
 		closer.Close()
+	}
+	if s.curlLog != nil {
+		s.curlLog.close()
 	}
 }
 

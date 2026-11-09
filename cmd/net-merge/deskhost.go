@@ -16,6 +16,7 @@ func hostControl(dir string, sched *engine.Scheduler, bal *engine.Balancer, sw c
 		return nil
 	}
 	svc := control.New(dir, db)
+	svc.EnableCurlDiagnostics()
 	svc.Attach(sched, sw)
 	go func() {
 		ticker := time.NewTicker(250 * time.Millisecond)

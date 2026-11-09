@@ -401,8 +401,48 @@ func (s *Scheduler) AcquireFor(f Family, skip map[string]struct{}) *Slot {
 // AcquireForHint is AcquireFor with the process that owns the new flow.
 func (s *Scheduler) AcquireForHint(f Family, skip map[string]struct{}, hint FlowHint) *Slot {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	var trace *SelectionTrace
+	var traced map[string]*SelectionCandidate
+	if hint.Trace != nil {
+		trace = &SelectionTrace{Time: s.now(), Family: "IPv4", Automatic: s.auto, Policy: "balance", Outcome: "no-candidate"}
+		if f == Fam6 {
+			trace.Family = "IPv6"
+		}
+		trace.Candidates = make([]SelectionCandidate, len(s.slots))
+		traced = map[string]*SelectionCandidate{}
+		for i, sl := range s.slots {
+			c := &trace.Candidates[i]
+			*c = SelectionCandidate{Name: sl.key, State: sl.state[f].String(), Weight: sl.weight[f], Active: sl.actF[f].Load(), LatencyMs: sl.latencyMs.Load(), Reason: "health-tier"}
+			c.Load = c.Active
+			if s.auto {
+				c.Load = sl.busy(f)
+			}
+			if s.now().Before(sl.downUntil[f]) {
+				c.CooldownMs = sl.downUntil[f].Sub(s.now()).Milliseconds()
+			}
+			switch {
+			case !sl.present:
+				c.Reason = "not-present"
+			case sl.ip(f) == nil:
+				c.Reason = "no-family-address"
+			default:
+				if _, ok := skip[sl.key]; ok {
+					c.Reason = "retry-excluded"
+				}
+			}
+			traced[sl.key] = c
+		}
+	}
+	defer func() {
+		s.mu.Unlock()
+		if trace != nil {
+			hint.Trace(*trace)
+		}
+	}()
 	if hint.Blocked {
+		if trace != nil {
+			trace.Outcome = "blocked-by-hint"
+		}
 		return nil
 	}
 	now := s.now()
@@ -436,6 +476,11 @@ func (s *Scheduler) AcquireForHint(f Family, skip map[string]struct{}, hint Flow
 	if len(pool) == 0 {
 		return nil
 	}
+	if trace != nil {
+		for _, sl := range pool {
+			traced[sl.key].Reason = "policy-excluded"
+		}
+	}
 	if s.policy != nil {
 		views := make([]AdapterView, 0, len(pool))
 		for _, sl := range pool {
@@ -443,8 +488,17 @@ func (s *Scheduler) AcquireForHint(f Family, skip map[string]struct{}, hint Flow
 		}
 		switch d := s.policy(hint, views); {
 		case d.Block:
+			if trace != nil {
+				trace.Policy = "block"
+			}
+			if trace != nil {
+				trace.Outcome = "blocked-by-policy"
+			}
 			return nil
 		case d.Pin != "":
+			if trace != nil {
+				trace.Policy = "pin"
+			}
 			pinned := make([]*Slot, 0, 1)
 			for _, sl := range pool {
 				if sl.key == d.Pin {
@@ -456,6 +510,9 @@ func (s *Scheduler) AcquireForHint(f Family, skip map[string]struct{}, hint Flow
 			}
 			pool = pinned
 		case len(d.Only) > 0:
+			if trace != nil {
+				trace.Policy = "subset"
+			}
 			allow := map[string]struct{}{}
 			for _, name := range d.Only {
 				allow[name] = struct{}{}
@@ -483,9 +540,24 @@ func (s *Scheduler) AcquireForHint(f Family, skip map[string]struct{}, hint Flow
 		if s.auto {
 			load = sl.busy(f)
 		}
-		if score := float64(load+1) / sl.weight[f]; score < bestScore {
+		score := float64(load+1) / sl.weight[f]
+		if trace != nil {
+			c := traced[sl.key]
+			c.Load = load
+			c.Reason = "score-or-tie"
+			if !math.IsInf(score, 0) && !math.IsNaN(score) {
+				v := score
+				c.Score = &v
+			}
+		}
+		if score < bestScore {
 			best, bestScore = sl, score
 		}
+	}
+	if trace != nil {
+		trace.Outcome = "selected"
+		trace.Selected = best.key
+		traced[best.key].Reason = "selected"
 	}
 	best.active.Add(1)
 	best.actF[f].Add(1)

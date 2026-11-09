@@ -86,6 +86,10 @@ func (s *flowSession) stop() {
 	s.cancel()
 	s.mu.Unlock()
 	for c := range flows {
+		if reasoned, ok := c.(interface{ CloseWithReason(string) error }); ok {
+			reasoned.CloseWithReason("capture-ended")
+			continue
+		}
 		c.Close()
 	}
 }
