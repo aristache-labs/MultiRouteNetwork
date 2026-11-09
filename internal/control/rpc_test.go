@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"net-merge/internal/engine"
-	"net-merge/internal/nics"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 )
 
 func TestStatusKeepsConnectedAdapters(t *testing.T) {
@@ -34,8 +34,13 @@ func TestStatusKeepsConnectedAdapters(t *testing.T) {
 }
 
 func TestOwnTunnelIsHidden(t *testing.T) {
-	if !hideAdapter("net-merge", "looks like a virtual/VPN adapter (name)") {
-		t.Fatal("the engine tunnel should not be shown as an adapter")
+	for _, name := range []string{"MultiRouteNetwork", "multiroutenetwork", "MULTIROUTENETWORK", "net-merge"} {
+		if !hideAdapter(name, "looks like a virtual/VPN adapter (name)") {
+			t.Fatalf("engine tunnel %q must be hidden", name)
+		}
+	}
+	if hideAdapter("Ethernet", "") || hideAdapter("Wi-Fi", "") {
+		t.Fatal("physical adapters must remain visible")
 	}
 }
 

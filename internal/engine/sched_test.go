@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 )
 
 func nic(name, ip string, w float64) nics.Nic {

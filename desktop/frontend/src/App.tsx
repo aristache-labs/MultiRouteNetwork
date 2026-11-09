@@ -1593,7 +1593,7 @@ function SettingsPanel({
         <Section title="About">
           <p>MultiRoute</p>
           <p className="muted">
-            Built on the MIT net-merge engine. Usage history stays on this PC.
+            Built on the MIT MultiRouteNetwork engine. Usage history stays on this PC.
           </p>
         </Section>
       </div>

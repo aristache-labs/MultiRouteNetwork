@@ -2,9 +2,9 @@ package control
 
 import (
 	"errors"
-	"net-merge/internal/engine"
-	"net-merge/internal/nics"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/store"
 	"time"
 )
 

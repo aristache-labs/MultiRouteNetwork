@@ -2,8 +2,8 @@ package control
 
 import (
 	"encoding/json"
-	"net-merge/internal/engine"
-	"net-merge/internal/logx"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/logx"
 	"os"
 	"path/filepath"
 	"strings"

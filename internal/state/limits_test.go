@@ -66,7 +66,7 @@ func TestLimitsSurviveARebootOnMacOS(t *testing.T) {
 	}{
 		{"darwin", macStateDir, macLimitsDir},
 		{"linux", macStateDir, macStateDir},
-		{"windows", `C:\Users\me\AppData\Local\net-merge`, `C:\Users\me\AppData\Local\net-merge`},
+		{"windows", `C:\Users\me\AppData\Local\MultiRouteNetwork`, `C:\Users\me\AppData\Local\MultiRouteNetwork`},
 		{"darwin", "/tmp/somewhere-else", "/tmp/somewhere-else"}, // a custom -state-dir is left alone
 	} {
 		got := limitsDirFor(c.goos, c.stateDir)
@@ -79,7 +79,7 @@ func TestLimitsSurviveARebootOnMacOS(t *testing.T) {
 	}
 }
 
-// `net-merge limit` reads limits.json every 50 ms while it waits for the running instance to save
+// `MultiRouteNetwork limit` reads limits.json every 50 ms while it waits for the running instance to save
 // the new cap. On Windows a rename over a file someone has open fails ("Access is denied"), so a
 // save that lands during one of those reads has to wait for it instead of failing.
 func TestSaveLimitsWhileTheFileIsOpen(t *testing.T) {

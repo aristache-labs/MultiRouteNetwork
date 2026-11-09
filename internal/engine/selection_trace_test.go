@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 	"testing"
 	"time"
 )

@@ -2,7 +2,7 @@ package control
 
 import (
 	"net"
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/rules"
 	"testing"
 	"time"
 )

@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 )
 
 // Family selects which address of a NIC a flow is pinned to. Load, speed and health are tracked
@@ -61,7 +61,7 @@ type Slot struct {
 	peak            [2]float64 // observed capacity: max recent rateIn+rateOut
 	flows           [2]map[*flowActivity]struct{}
 
-	// The adapter's total traffic from the OS's counters (all apps, not only net-merge's flows).
+	// The adapter's total traffic from the OS's counters (all apps, not only MultiRouteNetwork's flows).
 	linkIn, linkOut         uint64
 	linkRateIn, linkRateOut float64
 	linkPrimed              bool
@@ -125,7 +125,7 @@ type SlotStats struct {
 	Active, Total     int64
 	Failed            int64
 	BytesIn, BytesOut int64
-	RateIn, RateOut   float64 // through net-merge, both families summed (bytes/s)
+	RateIn, RateOut   float64 // through MultiRouteNetwork, both families summed (bytes/s)
 	LinkIn, LinkOut   float64 // through the adapter by any app, from the OS's counters (bytes/s)
 	Peak, Peak6       float64
 	LimitMbps         float64 // cap in Mbit/s, 0 = unlimited
@@ -192,7 +192,7 @@ func (s *Scheduler) SetLimits(limits map[string]float64) {
 	}
 }
 
-// Limits returns the caps by adapter name in Mbit/s, for saving and for `net-merge status`.
+// Limits returns the caps by adapter name in Mbit/s, for saving and for `MultiRouteNetwork status`.
 func (s *Scheduler) Limits() map[string]float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()

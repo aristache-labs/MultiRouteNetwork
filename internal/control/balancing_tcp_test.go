@@ -3,9 +3,9 @@ package control
 import (
 	"context"
 	"net"
-	"net-merge/internal/engine"
-	"net-merge/internal/nics"
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/rules"
 	"testing"
 	"time"
 )

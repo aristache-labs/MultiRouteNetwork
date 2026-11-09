@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"net-merge/internal/control"
+	"MultiRouteNetwork/internal/control"
 )
 
 const engineStartupTimeout = 30 * time.Second

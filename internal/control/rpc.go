@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 )
 
 // Request is one desktop call. Op selects the fields that matter.

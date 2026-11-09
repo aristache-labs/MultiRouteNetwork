@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+func TestRenamedTunnelStaysVirtual(t *testing.T) {
+	for _, name := range []string{"MultiRouteNetwork", "multiroutenetwork", "MULTIROUTENETWORK", "net-merge"} {
+		if !virtualName.MatchString(name) {
+			t.Fatalf("own tunnel %q must be excluded from routing", name)
+		}
+	}
+	for _, name := range []string{"Ethernet", "Ethernet 4", "Wi-Fi"} {
+		if virtualName.MatchString(name) {
+			t.Fatalf("physical adapter %q must not be excluded", name)
+		}
+	}
+}
+
 func TestLinkCountersReadRealAdapter(t *testing.T) {
 	ifaces, _ := net.Interfaces()
 	for _, ifc := range ifaces {

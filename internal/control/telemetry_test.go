@@ -1,8 +1,8 @@
 package control
 
 import (
-	"net-merge/internal/engine"
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/rules"
 	"testing"
 	"time"
 )

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/control"
+	"MultiRouteNetwork/internal/control"
 )
 
 func statusReply(t *testing.T, a *API) control.Reply {

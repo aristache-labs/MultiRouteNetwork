@@ -1,20 +1,20 @@
-# Developing net-merge
+# Developing MultiRouteNetwork
 
-Technical notes for people who want to build, change or understand net-merge. For installing and using it, see the [README](../README.md).
+Technical notes for people who want to build, change or understand MultiRouteNetwork. For installing and using it, see the [README](../README.md).
 
 ## Command line and flags
 
 ```
-net-merge on | off        start / pause merging in the running tray
-net-merge quit            pause and exit the tray
-net-merge status | list   live numbers / which adapters are used and why
-net-merge autostart on|off|status
-net-merge tray            tray app (asks for admin once)
-net-merge run             system-wide in a console window
-net-merge socks           plain SOCKS5 proxy on 127.0.0.1:1080 (no admin, per-app)
-net-merge cleanup         remove leftover routes after a crash
-net-merge install         macOS only: sudo net-merge install, lets the tray start without a password
-net-merge version
+MultiRouteNetwork on | off        start / pause merging in the running tray
+MultiRouteNetwork quit            pause and exit the tray
+MultiRouteNetwork status | list   live numbers / which adapters are used and why
+MultiRouteNetwork autostart on|off|status
+MultiRouteNetwork tray            tray app (asks for admin once)
+MultiRouteNetwork run             system-wide in a console window
+MultiRouteNetwork socks           plain SOCKS5 proxy on 127.0.0.1:1080 (no admin, per-app)
+MultiRouteNetwork cleanup         remove leftover routes after a crash
+MultiRouteNetwork install         macOS only: sudo MultiRouteNetwork install, lets the tray start without a password
+MultiRouteNetwork version
 ```
 
 Flags for `tray`/`run`/`socks`: `-include "WiFi,Ethernet"` (only these adapters), `-weight "Name=3"`
@@ -37,7 +37,7 @@ flowchart LR
     Probes["Probes and speed estimates<br/>every second"] -.-> Sched
 ```
 
-The app's connection ends inside the userland stack. net-merge then opens a second connection to the real server from the chosen adapter and copies bytes between the two.
+The app's connection ends inside the userland stack. MultiRouteNetwork then opens a second connection to the real server from the chosen adapter and copies bytes between the two.
 
 ### Design trade-offs
 
@@ -45,7 +45,7 @@ The app's connection ends inside the userland stack. net-merge then opens a seco
 - **Refuse IPv6 when the adapters differ.** Apps prefer IPv6, so allowing it would send everything to the few adapters that have it. In `auto` mode new IPv6 connections are refused at the first packet and apps fall back to IPv4 at once. The cost: IPv6-only hosts are unreachable until every adapter has IPv6, or until the setting is changed.
 - **No speed tests.** Weights come from the traffic that already flows. The cost: a link is measured only while it carries traffic, so an idle estimate can only recover up to half of the best link's speed.
 
-- ON creates a virtual adapter `net-merge` (Wintun on Windows, a kernel TUN on Linux, a utun on macOS) and two `/1` routes per IP family that beat the default route
+- ON creates a virtual adapter `MultiRouteNetwork` (Wintun on Windows, a kernel TUN on Linux, a utun on macOS) and two `/1` routes per IP family that beat the default route
   without touching it. OFF deletes them. If the process dies the adapter and routes die with it, so a
   crash can't leave the machine without internet.
 - Flows entering the TUN are terminated in a userland TCP/IP stack (tun2socks/gVisor) and re-dialed from
@@ -56,7 +56,7 @@ The app's connection ends inside the userland stack. net-merge then opens a seco
   3x less CPU per Mbit/s than at 1500 (0.18 vs 0.54 cores per 100 Mbit/s). `-mtu` changes it.
 - Adapters are detected automatically and re-scanned every 3 s. Only real hardware with a default route
   is used (on Linux: interfaces backed by a device in sysfs, with a default route in any routing table; on macOS: `enN` interfaces and TetherKit's `fethN`, with a default route): tunnels, VPNs (Tailscale, WireGuard, ...), virtual switches and LAN-only adapters are skipped
-  (`net-merge list` shows why).
+  (`MultiRouteNetwork list` shows why).
 - Each adapter and each address family is probed for real internet access. A tether with no data or a
   captive-portal Wi-Fi gets no flows; a recovered link rejoins within seconds.
 - Automatic balancing sends flows to the adapter with the lowest (busy flows + 1) / weight,
@@ -90,7 +90,7 @@ multiple adapters at once; this does not split a single TCP connection across li
 
 The desktop engine writes identified `curl.exe` flow diagnostics to
 `curl-routing.jsonl` in the per-user state directory (normally
-`%LOCALAPPDATA%\net-merge`). The current file and one `.1` backup are each
+`%LOCALAPPDATA%\MultiRouteNetwork`). The current file and one `.1` backup are each
 limited to 1 MiB. Writes run on a bounded background queue; `droppedBefore`
 reports queue overflow. No URLs, addresses, executable paths or payloads are logged.
 Unknown owners remain unknown and are not attributed to curl.
@@ -122,7 +122,7 @@ rate-limiter sleeps. Metrics do not change accounting or scheduler weights.
 To watch a test without starting another transfer:
 
 ```powershell
-Get-Content "$env:LOCALAPPDATA\net-merge\curl-routing.jsonl" -Tail 20 -Wait
+Get-Content "$env:LOCALAPPDATA\MultiRouteNetwork\curl-routing.jsonl" -Tail 20 -Wait
 ```
 
 ### Windows pause and resume
@@ -141,23 +141,23 @@ Needs Go (see `go.mod`) and, for the Windows installer, [Inno Setup 6](https://j
 
 ```
 go test ./...                       # uses loopback aliases as fake adapters; no second link needed
-go build -o net-merge ./cmd/net-merge   # Linux, macOS (macOS needs the Xcode command line tools)
-nix build                           # Linux, with Nix: result/bin/net-merge
-scripts\build.ps1 -Version 0.1.0    # dist\: net-merge.exe, net-merge-tray.exe, installer, portable zip
+go build -o MultiRouteNetwork ./cmd/MultiRouteNetwork   # Linux, macOS (macOS needs the Xcode command line tools)
+nix build                           # Linux, with Nix: result/bin/MultiRouteNetwork
+scripts\build.ps1 -Version 0.1.0    # dist\: MultiRouteNetwork.exe, MultiRouteNetwork-tray.exe, installer, portable zip
 ```
 
 `wintun.dll` is not in the repo: `scripts\fetch-wintun.ps1` downloads it and verifies its SHA-256 and its
 WireGuard LLC signature. To run from source, put it next to the exe:
 
 ```
-go build -o net-merge.exe .\cmd\net-merge
+go build -o MultiRouteNetwork.exe .\cmd\MultiRouteNetwork
 scripts\fetch-wintun.ps1 -OutDir .
 ```
 
 Releases are built by GitHub Actions when a `vX.Y.Z` tag is pushed (`.github/workflows/release.yml`).
 Add the version's section to `CHANGELOG.md` first: it becomes the release notes, and the release fails
 without it (`scripts\release-notes.ps1 -Version X.Y.Z` previews them).
-Layout: `cmd/net-merge` is the command line; `internal/engine` the scheduler, balancer, probes and
+Layout: `cmd/MultiRouteNetwork` is the command line; `internal/engine` the scheduler, balancer, probes and
 SOCKS5 front-end; `internal/nics` adapter discovery, counters and egress pinning; `internal/tun` the
 system-wide front-end; `internal/tray` the tray icon; `internal/platform` privileges, single instance
 and autostart. OS-specific code lives in `_windows.go` / `_linux.go` / `_darwin.go` files next to the shared code. The

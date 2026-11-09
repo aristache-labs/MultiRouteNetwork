@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/rules"
 )
 
 func TestRulesAndUsageRoundTrip(t *testing.T) {

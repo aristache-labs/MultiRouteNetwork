@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/engine"
-	"net-merge/internal/state"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/state"
 )
 
 func TestLimitApplyWithoutInstanceWritesLimitsFile(t *testing.T) {

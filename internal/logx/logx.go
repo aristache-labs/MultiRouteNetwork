@@ -1,4 +1,4 @@
-// Package logx is net-merge's console/log-file output, shared by every package.
+// Package logx is MultiRouteNetwork's console/log-file output, shared by every package.
 package logx
 
 import (

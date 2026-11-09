@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 )
 
 // Internet reachability probes: a TCP connect to a well-known anycast IP, bound to the NIC.

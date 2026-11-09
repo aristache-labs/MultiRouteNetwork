@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/engine"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 )
 
 type testSwitch struct{ on atomic.Bool }

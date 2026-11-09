@@ -14,11 +14,11 @@ import (
 
 	"net/netip"
 
-	"net-merge/internal/engine"
-	"net-merge/internal/nics"
-	"net-merge/internal/procid"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/procid"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 )
 
 const (
@@ -772,7 +772,7 @@ func vpnAdapter(name, reason string) bool {
 
 func hideAdapter(name, reason string) bool {
 	blob := strings.ToLower(name + " " + reason)
-	for _, word := range []string{"wsl", "docker", "vethernet", "loopback", "bluetooth", "npcap", "teredo", "isatap", "pseudo", "net-merge", "wintun"} {
+	for _, word := range []string{"wsl", "docker", "vethernet", "loopback", "bluetooth", "npcap", "teredo", "isatap", "pseudo", "multiroutenetwork", "net-merge", "wintun"} {
 		if strings.Contains(blob, word) {
 			return true
 		}

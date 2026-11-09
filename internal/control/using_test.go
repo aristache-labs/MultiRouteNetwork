@@ -1,7 +1,7 @@
 package control
 
 import (
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/rules"
 	"testing"
 )
 

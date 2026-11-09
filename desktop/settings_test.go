@@ -2,7 +2,7 @@ package main
 
 import (
 	"net"
-	"net-merge/internal/control"
+	"MultiRouteNetwork/internal/control"
 	"net/http/httptest"
 	"strings"
 	"testing"

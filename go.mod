@@ -1,4 +1,4 @@
-module net-merge
+module MultiRouteNetwork
 
 go 1.27
 

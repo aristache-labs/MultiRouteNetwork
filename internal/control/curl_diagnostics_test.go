@@ -3,7 +3,7 @@ package control
 import (
 	"bufio"
 	"encoding/json"
-	"net-merge/internal/engine"
+	"MultiRouteNetwork/internal/engine"
 	"os"
 	"path/filepath"
 	"testing"

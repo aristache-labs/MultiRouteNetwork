@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"net-merge/internal/logx"
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/logx"
+	"MultiRouteNetwork/internal/nics"
 )
 
 const openHint = "needs root"

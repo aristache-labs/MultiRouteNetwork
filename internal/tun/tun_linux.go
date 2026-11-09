@@ -8,7 +8,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
-	"net-merge/internal/logx"
+	"MultiRouteNetwork/internal/logx"
 )
 
 const openHint = "needs root or CAP_NET_ADMIN, and /dev/net/tun"

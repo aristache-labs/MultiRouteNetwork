@@ -13,18 +13,18 @@ import (
 
 func IsAdmin() bool { return windows.GetCurrentProcessToken().IsElevated() }
 
-// SingleInstance is false if another net-merge (run or tray) already owns the TUN.
+// SingleInstance is false if another MultiRouteNetwork (run or tray) already owns the TUN.
 // The mutex handle is intentionally kept for the life of the process.
 func SingleInstance() bool {
-	name, _ := windows.UTF16PtrFromString(`Global\net-merge`)
+	name, _ := windows.UTF16PtrFromString(`Global\MultiRouteNetwork`)
 	_, err := windows.CreateMutex(nil, false, name)
 	return err != windows.ERROR_ALREADY_EXISTS
 }
 
-// InstanceRunning reports whether an (elevated) net-merge holds the mutex. From a normal shell
+// InstanceRunning reports whether an (elevated) MultiRouteNetwork holds the mutex. From a normal shell
 // OpenMutex is denied rather than succeeding, which also means it exists.
 func InstanceRunning() bool {
-	name, _ := windows.UTF16PtrFromString(`Global\net-merge`)
+	name, _ := windows.UTF16PtrFromString(`Global\MultiRouteNetwork`)
 	h, err := windows.OpenMutex(windows.SYNCHRONIZE, false, name)
 	if err == nil {
 		windows.CloseHandle(h)

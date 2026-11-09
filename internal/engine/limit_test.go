@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 )
 
 func TestParseLimit(t *testing.T) {

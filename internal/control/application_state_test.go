@@ -1,8 +1,8 @@
 package control
 
 import (
-	"net-merge/internal/procid"
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/procid"
+	"MultiRouteNetwork/internal/rules"
 	"testing"
 )
 

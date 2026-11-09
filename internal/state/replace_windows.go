@@ -9,7 +9,7 @@ import (
 )
 
 // replaceFile renames tmp over dst. Windows refuses that while another process has dst open, and
-// `net-merge limit` opens limits.json every 50 ms while it waits for the running instance to save
+// `MultiRouteNetwork limit` opens limits.json every 50 ms while it waits for the running instance to save
 // it, so wait a moment for the reader to finish instead of failing.
 func replaceFile(tmp, dst string) error {
 	deadline := time.Now().Add(time.Second)

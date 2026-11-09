@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"net-merge/internal/control"
-	"net-merge/internal/engine"
-	"net-merge/internal/logx"
-	"net-merge/internal/platform"
-	"net-merge/internal/state"
-	"net-merge/internal/tray"
-	"net-merge/internal/tun"
+	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/logx"
+	"MultiRouteNetwork/internal/platform"
+	"MultiRouteNetwork/internal/state"
+	"MultiRouteNetwork/internal/tray"
+	"MultiRouteNetwork/internal/tun"
 )
 
 func cmdTray(args []string) {
@@ -35,17 +35,17 @@ func cmdTray(args []string) {
 		if err := platform.RelaunchTray(child, *hidden); err != nil {
 			die(err)
 		}
-		fmt.Println("Approve the admin prompt. Look for the net-merge icon in the system tray (^ overflow arrow) or menu bar.")
+		fmt.Println("Approve the admin prompt. Look for the MultiRouteNetwork icon in the system tray (^ overflow arrow) or menu bar.")
 		return
 	}
 	if !platform.SingleInstance() {
-		fmt.Println("net-merge is already running.")
+		fmt.Println("MultiRouteNetwork is already running.")
 		return
 	}
 	if c.logFile == "" {
 		c.stats = 0 // nobody is watching a hidden console
 		if !platform.HasConsole() {
-			c.logFile = filepath.Join(c.stateDir, "net-merge.log") // windowless build: keep a log for diagnosis
+			c.logFile = filepath.Join(c.stateDir, "MultiRouteNetwork.log") // windowless build: keep a log for diagnosis
 		}
 	}
 	if err := c.setup(); err != nil {

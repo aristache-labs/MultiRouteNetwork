@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net-merge/internal/control"
-	"net-merge/internal/engine"
-	"net-merge/internal/logx"
-	"net-merge/internal/nics"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/logx"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/store"
 	"time"
 )
 

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/rules"
 
 	_ "modernc.org/sqlite"
 )

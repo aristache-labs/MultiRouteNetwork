@@ -2,8 +2,8 @@ package control
 
 import (
 	"math"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 	"testing"
 	"time"
 )

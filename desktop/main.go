@@ -12,7 +12,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 
-	"net-merge/internal/control"
+	"MultiRouteNetwork/internal/control"
 )
 
 //go:embed frontend/dist

@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"net-merge/internal/nics"
+	"MultiRouteNetwork/internal/nics"
 )
 
 func TestPolicyPin(t *testing.T) {

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"net-merge/internal/engine"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 )
 
 func testPipePath() string { return fmt.Sprintf(`\\.\pipe\MultiRoute-test-%d`, time.Now().UnixNano()) }

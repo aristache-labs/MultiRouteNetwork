@@ -12,11 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"net-merge/internal/control"
-	"net-merge/internal/platform"
-	"net-merge/internal/rules"
-	"net-merge/internal/state"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/platform"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/state"
+	"MultiRouteNetwork/internal/store"
 )
 
 // API is the local HTTP surface the window uses. It stays unelevated and talks to the engine pipe.
@@ -179,16 +179,16 @@ func (a *API) runningEngine() bool {
 func enginePath() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "net-merge.exe"
+		return "MultiRouteNetwork.exe"
 	}
-	next := filepath.Join(filepath.Dir(exe), "net-merge.exe")
+	next := filepath.Join(filepath.Dir(exe), "MultiRouteNetwork.exe")
 	if _, err := os.Stat(next); err == nil {
 		return next
 	}
 	return next
 }
 
-var errNoEngine = errors.New("net-merge.exe was not found next to MultiRoute")
+var errNoEngine = errors.New("MultiRouteNetwork.exe was not found next to MultiRoute")
 
 func (a *API) updateAutostart(enabled bool) error {
 	if a.configureStartup != nil {

@@ -12,31 +12,31 @@ import (
 	"syscall"
 	"time"
 
-	"net-merge/internal/control"
-	"net-merge/internal/engine"
-	"net-merge/internal/icon"
-	"net-merge/internal/logx"
-	"net-merge/internal/nics"
-	"net-merge/internal/platform"
-	"net-merge/internal/state"
-	"net-merge/internal/tun"
+	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/icon"
+	"MultiRouteNetwork/internal/logx"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/platform"
+	"MultiRouteNetwork/internal/state"
+	"MultiRouteNetwork/internal/tun"
 )
 
-const usage = `net-merge: use all your network adapters at once.
+const usage = `MultiRouteNetwork: use all your network adapters at once.
 
-  net-merge tray       tray icon: its menu turns system-wide ON/OFF and shows speeds
-  net-merge run        system-wide ON in a console window (asks for admin/root); Ctrl+C or "off" turns it OFF
-  net-merge on|off     turn system-wide mode on/off in a running tray (off also works for run)
-  net-merge quit       turn it off and exit the tray
-  net-merge status     show whether it is on, and per-adapter load
-  net-merge limit <adapter> <Mbit/s>   cap an adapter (0 or unlimited removes the cap)
-  net-merge limit      list the saved speed limits
-  net-merge socks      plain SOCKS5 proxy on 127.0.0.1:1080 (no admin, per-app)
-  net-merge list       show detected adapters
-  net-merge autostart on|off|status   start the tray at sign-in (Windows: no UAC prompt)
-  net-merge cleanup    remove leftover routes after a crash (admin/root)
-  net-merge install    macOS: sudo net-merge install lets the tray start without a password
-  net-merge version
+  MultiRouteNetwork tray       tray icon: its menu turns system-wide ON/OFF and shows speeds
+  MultiRouteNetwork run        system-wide ON in a console window (asks for admin/root); Ctrl+C or "off" turns it OFF
+  MultiRouteNetwork on|off     turn system-wide mode on/off in a running tray (off also works for run)
+  MultiRouteNetwork quit       turn it off and exit the tray
+  MultiRouteNetwork status     show whether it is on, and per-adapter load
+  MultiRouteNetwork limit <adapter> <Mbit/s>   cap an adapter (0 or unlimited removes the cap)
+  MultiRouteNetwork limit      list the saved speed limits
+  MultiRouteNetwork socks      plain SOCKS5 proxy on 127.0.0.1:1080 (no admin, per-app)
+  MultiRouteNetwork list       show detected adapters
+  MultiRouteNetwork autostart on|off|status   start the tray at sign-in (Windows: no UAC prompt)
+  MultiRouteNetwork cleanup    remove leftover routes after a crash (admin/root)
+  MultiRouteNetwork install    macOS: sudo MultiRouteNetwork install lets the tray start without a password
+  MultiRouteNetwork version
 
 Flags for run/socks: -include "WiFi,Ethernet 3"  -weight "Name=3"  -auto-weight=false  -stats 5s
 `
@@ -133,7 +133,7 @@ func (c *common) boot(mode func() string) (*engine.Scheduler, *engine.Balancer, 
 		return nil, nil, err
 	}
 	if len(nics) == 0 {
-		return nil, nil, fmt.Errorf("no usable IPv4 adapters found (try: net-merge list)")
+		return nil, nil, fmt.Errorf("no usable IPv4 adapters found (try: MultiRouteNetwork list)")
 	}
 	sched := engine.NewScheduler(nics)
 	sched.SetAuto(c.auto && len(c.weights) == 0)
@@ -208,13 +208,13 @@ func formatNICs(snap []engine.SlotStats) string {
 		if !s.Present {
 			gone = " (gone)"
 		}
-		// "link" is the adapter's total traffic by any app (Windows' counters); "via net-merge" is the
-		// part net-merge relayed. Apps that bind to adapters directly (qBittorrent) only show in "link".
+		// "link" is the adapter's total traffic by any app (Windows' counters); "via MultiRouteNetwork" is the
+		// part MultiRouteNetwork relayed. Apps that bind to adapters directly (qBittorrent) only show in "link".
 		lim := ""
 		if s.LimitMbps > 0 {
 			lim = "  limit " + limitPhrase(s.LimitMbps)
 		}
-		fmt.Fprintf(&sb, "%-14s v4 %-11s v6 %-11s link down %6.1f up %5.1f Mbit/s  via net-merge %6.1f  active %3d  total %5d  w %.2f/%.2f  failed %d%s%s\n",
+		fmt.Fprintf(&sb, "%-14s v4 %-11s v6 %-11s link down %6.1f up %5.1f Mbit/s  via MultiRouteNetwork %6.1f  active %3d  total %5d  w %.2f/%.2f  failed %d%s%s\n",
 			s.Name, s.State, s.State6, s.LinkIn*8/1e6, s.LinkOut*8/1e6, (s.RateIn+s.RateOut)*8/1e6, s.Active, s.Total, s.Weight, s.Weight6, s.Failed, lim, gone)
 	}
 	return sb.String()
@@ -240,14 +240,14 @@ func main() {
 	}
 	switch cmd {
 	case "version":
-		fmt.Println("net-merge", version)
+		fmt.Println("MultiRouteNetwork", version)
 	case "install", "uninstall":
 		if err := platform.Install(cmd == "uninstall"); err != nil {
 			die(err)
 		}
 	case "autostart":
 		if len(args) != 1 || (args[0] != "on" && args[0] != "off" && args[0] != "status") {
-			fmt.Fprintln(os.Stderr, "usage: net-merge autostart on|off|status")
+			fmt.Fprintln(os.Stderr, "usage: MultiRouteNetwork autostart on|off|status")
 			os.Exit(2)
 		}
 		if err := platform.Autostart(args[0]); err != nil {
@@ -330,7 +330,7 @@ func cmdSocks(args []string) {
 	if err != nil {
 		die(err)
 	}
-	logx.Printf("net-merge SOCKS5 listening on %s\n", *listen)
+	logx.Printf("MultiRouteNetwork SOCKS5 listening on %s\n", *listen)
 	die(engine.ServeSocks5(ln, bal))
 }
 
@@ -347,15 +347,15 @@ func cmdRun(args []string) {
 		// Re-run elevated, handing over where to log and keep state.
 		child := append([]string{"run"}, args...)
 		child = append(child, "-state-dir", c.stateDir)
-		state.Prepare(c.stateDir) // as this user, so `net-merge off` can still drop markers in it
+		state.Prepare(c.stateDir) // as this user, so `MultiRouteNetwork off` can still drop markers in it
 		if err := platform.RelaunchElevated(child, *hidden); err != nil {
 			die(fmt.Errorf("could not start elevated: %w", err))
 		}
-		fmt.Println("Approve the UAC prompt. System-wide mode runs in the new window; `net-merge off` turns it off.")
+		fmt.Println("Approve the UAC prompt. System-wide mode runs in the new window; `MultiRouteNetwork off` turns it off.")
 		return
 	}
 	if !platform.SingleInstance() {
-		fmt.Println("net-merge is already running (check the system tray, or run `net-merge off`).")
+		fmt.Println("MultiRouteNetwork is already running (check the system tray, or run `MultiRouteNetwork off`).")
 		return
 	}
 	if err := c.setup(); err != nil {
@@ -392,7 +392,7 @@ func cmdRun(args []string) {
 		logx.Printf("error: %v\n", err)
 		os.Exit(1)
 	}
-	logx.Printf("net-merge is ON: all IPv4 traffic is balanced across the adapters above. Ctrl+C or `net-merge off` to stop.\n")
+	logx.Printf("MultiRouteNetwork is ON: all IPv4 traffic is balanced across the adapters above. Ctrl+C or `MultiRouteNetwork off` to stop.\n")
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
@@ -426,7 +426,7 @@ func cmdRun(args []string) {
 	}
 	t.Close()
 	state.Clear(c.stateDir)
-	logx.Printf("net-merge is OFF.\n")
+	logx.Printf("MultiRouteNetwork is OFF.\n")
 }
 
 // cmdControl implements `on`, `off` and `quit` against a running tray/run instance.
@@ -436,10 +436,10 @@ func cmdControl(name string, args []string) {
 	fs.Parse(args)
 	if !platform.InstanceRunning() {
 		if name == "off" || name == "quit" {
-			fmt.Println("net-merge is not running (already off).")
+			fmt.Println("MultiRouteNetwork is not running (already off).")
 			return
 		}
-		die(fmt.Errorf("net-merge is not running; start it with `net-merge tray`"))
+		die(fmt.Errorf("MultiRouteNetwork is not running; start it with `MultiRouteNetwork tray`"))
 	}
 	_, wasOn := state.Read(*dir)
 	if err := state.SendMarker(*dir, name); err != nil {
@@ -451,15 +451,15 @@ func cmdControl(name string, args []string) {
 		_, on := state.Read(*dir)
 		switch {
 		case name == "on" && on == want:
-			fmt.Println("net-merge is ON.")
+			fmt.Println("MultiRouteNetwork is ON.")
 			return
 		case name != "on" && !on:
-			fmt.Println("net-merge is OFF.")
+			fmt.Println("MultiRouteNetwork is OFF.")
 			return
 		}
 	}
 	_ = wasOn
-	die(fmt.Errorf("sent %q but it did not take effect (does this instance support it? run: net-merge tray)", name))
+	die(fmt.Errorf("sent %q but it did not take effect (does this instance support it? run: MultiRouteNetwork tray)", name))
 }
 
 func cmdStatus(args []string) {
@@ -468,10 +468,10 @@ func cmdStatus(args []string) {
 	fs.Parse(args)
 	st, on := state.Read(*dir)
 	if !on {
-		fmt.Println("net-merge is OFF.")
+		fmt.Println("MultiRouteNetwork is OFF.")
 		return
 	}
-	fmt.Printf("net-merge is ON (%s, pid %d, up %s)\nIPv6: %s\n%s", st.Mode, st.PID, time.Since(st.Since).Truncate(time.Second), st.V6, formatNICs(st.NICs))
+	fmt.Printf("MultiRouteNetwork is ON (%s, pid %d, up %s)\nIPv6: %s\n%s", st.Mode, st.PID, time.Since(st.Since).Truncate(time.Second), st.V6, formatNICs(st.NICs))
 }
 
 // cmdLimit lists the saved caps, or sets one. A running instance gets the change through a marker
@@ -503,7 +503,7 @@ func cmdLimit(args []string) {
 		return
 	}
 	if len(rest) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: net-merge limit <adapter> <Mbit/s>   (0, off or unlimited removes the cap)")
+		fmt.Fprintln(os.Stderr, "usage: MultiRouteNetwork limit <adapter> <Mbit/s>   (0, off or unlimited removes the cap)")
 		os.Exit(2)
 	}
 	name := strings.TrimSpace(rest[0])
@@ -518,11 +518,11 @@ func cmdLimit(args []string) {
 	if live {
 		fmt.Printf("%s: %s.\n", name, limitPhrase(mbitPerSec))
 	} else {
-		fmt.Printf("%s: %s. It takes effect the next time net-merge starts.\n", name, limitPhrase(mbitPerSec))
+		fmt.Printf("%s: %s. It takes effect the next time MultiRouteNetwork starts.\n", name, limitPhrase(mbitPerSec))
 	}
 }
 
-// limitWait is how long `net-merge limit` waits for a running instance to apply and save the cap.
+// limitWait is how long `MultiRouteNetwork limit` waits for a running instance to apply and save the cap.
 var limitWait = 4 * time.Second
 
 // limitApply saves a cap. With a running instance the request goes through ctl/ and the instance

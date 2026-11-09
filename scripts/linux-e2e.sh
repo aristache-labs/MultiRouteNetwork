@@ -3,19 +3,19 @@
 # internet access. A machine with one NIC gets a second "uplink" so balancing can be checked:
 # a veth pair into a network namespace that NATs back out through the real NIC.
 #
-#   host nmup-h 10.77.0.1  <->  ns nmup-n 10.77.0.2   (the second uplink net-merge balances over)
+#   host nmup-h 10.77.0.1  <->  ns nmup-n 10.77.0.2   (the second uplink MultiRouteNetwork balances over)
 #   ns   nmgw-n 10.88.0.2  <->  host nmgw-h 10.88.0.1 (the namespace's way out, NATed by the host)
 #
-# usage: scripts/linux-e2e.sh ./net-merge
+# usage: scripts/linux-e2e.sh ./MultiRouteNetwork
 set -uo pipefail
-BIN=$(realpath "${1:-./net-merge}")
-STATE=/tmp/net-merge-e2e
+BIN=$(realpath "${1:-./MultiRouteNetwork}")
+STATE=/tmp/MultiRouteNetwork-e2e
 # Large files on CDNs. A runner sometimes gets nothing from one of them, so the next is tried.
 URLS=(https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
       https://archive.ubuntu.com/ubuntu/dists/noble/Contents-amd64.gz
       https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb)
 REAL=$(ip -4 route show default | awk '{print $5; exit}')
-# Resolved before net-merge starts: the download check is about balancing TCP, and name lookups
+# Resolved before MultiRouteNetwork starts: the download check is about balancing TCP, and name lookups
 # through the test's second uplink (DNS is checked separately below) must not decide it.
 declare -A IP
 for u in "${URLS[@]}"; do
@@ -40,14 +40,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-wait_on() { # wait until `net-merge status` reports ON
+wait_on() { # wait until `MultiRouteNetwork status` reports ON
     for _ in $(seq 1 40); do
         "$BIN" status -state-dir "$STATE" 2>/dev/null | grep -q 'is ON' && return 0
         sleep 0.5
     done
     return 1
 }
-nic_bytes() { # bytes net-merge relayed through an adapter, from its status file
+nic_bytes() { # bytes MultiRouteNetwork relayed through an adapter, from its status file
     jq -r --arg n "$1" '.NICs[] | select(.Name == $n) | .BytesIn' "$STATE/status.json"
 }
 
@@ -80,7 +80,7 @@ sudo iptables -I FORWARD -i nmgw-h -j ACCEPT
 sudo iptables -I FORWARD -o nmgw-h -j ACCEPT
 sudo ip route add default via 10.77.0.2 dev nmup-h metric 900
 # What the namespace sends out through the host must leave through the real NIC. Without this it would
-# match net-merge's capture routes, re-enter the TUN and loop (thousands of flows per second).
+# match MultiRouteNetwork's capture routes, re-enter the TUN and loop (thousands of flows per second).
 gw=$(ip -4 route show default dev "$REAL" | awk '{print $3; exit}')
 sudo ip route add default ${gw:+via $gw} dev "$REAL" table 100
 sudo ip rule add iif nmgw-h lookup 100 priority 90
@@ -90,37 +90,37 @@ ip=$(curl -4 -s --max-time 10 --interface nmup-h https://api.ipify.org) &&
 echo "== adapter detection (the veth is virtual, so it is used only via -include)"
 "$BIN" list
 
-# Another TUN app (Clash, sing-box) on net-merge's default address: it must pick another range (#43).
+# Another TUN app (Clash, sing-box) on MultiRouteNetwork's default address: it must pick another range (#43).
 sudo ip link add nmclash type dummy && sudo ip addr add 198.18.0.1/30 dev nmclash && sudo ip link set nmclash up
 
 if command -v dig >/dev/null; then
-    echo "== DNS over UDP without net-merge (baseline): 1.1.1.1 $(dns_answers 1.1.1.1)/12, 8.8.8.8 $(dns_answers 8.8.8.8)/12, 9.9.9.9 $(dns_answers 9.9.9.9)/12"
+    echo "== DNS over UDP without MultiRouteNetwork (baseline): 1.1.1.1 $(dns_answers 1.1.1.1)/12, 8.8.8.8 $(dns_answers 8.8.8.8)/12, 9.9.9.9 $(dns_answers 9.9.9.9)/12"
 fi
 echo "== system-wide ON over $REAL + nmup-h"
-sudo "$BIN" run -include "$REAL,nmup-h" -state-dir "$STATE" -log "$STATE/net-merge.log" -stats 0 -for 170s &
-wait_on && pass "net-merge turned on" || { fail "net-merge did not turn on"; cat "$STATE/net-merge.log"; exit 1; }
+sudo "$BIN" run -include "$REAL,nmup-h" -state-dir "$STATE" -log "$STATE/MultiRouteNetwork.log" -stats 0 -for 170s &
+wait_on && pass "MultiRouteNetwork turned on" || { fail "MultiRouteNetwork did not turn on"; cat "$STATE/MultiRouteNetwork.log"; exit 1; }
 sleep 4 # let the internet probes finish
 "$BIN" status -state-dir "$STATE"
 
-routes=$(ip -4 route show dev net-merge)
+routes=$(ip -4 route show dev MultiRouteNetwork)
 grep -q '0.0.0.0/1' <<<"$routes" && grep -q '128.0.0.0/1' <<<"$routes" &&
-    pass "capture routes 0.0.0.0/1 + 128.0.0.0/1 on net-merge" || fail "capture routes missing: $routes"
-mtu=$(cat /sys/class/net/net-merge/mtu)
+    pass "capture routes 0.0.0.0/1 + 128.0.0.0/1 on MultiRouteNetwork" || fail "capture routes missing: $routes"
+mtu=$(cat /sys/class/net/MultiRouteNetwork/mtu)
 [ "$mtu" = 9000 ] && pass "TUN MTU is 9000" || fail "TUN MTU is $mtu, want 9000"
-addr=$(ip -4 -o addr show dev net-merge | awk '{print $4}')
+addr=$(ip -4 -o addr show dev MultiRouteNetwork | awk '{print $4}')
 [ "$addr" = 198.18.1.1/24 ] && pass "TUN moved to 198.18.1.1/24, off the other app's 198.18.0.1/30" ||
     fail "TUN address is $addr, want 198.18.1.1/24"
 
 code=$(curl -4 -s --max-time 10 -o /dev/null -w '%{http_code}' https://example.com)
-[ "$code" = 200 ] && pass "plain HTTPS works through net-merge" || fail "HTTPS through net-merge: $code"
+[ "$code" = 200 ] && pass "plain HTTPS works through MultiRouteNetwork" || fail "HTTPS through MultiRouteNetwork: $code"
 if command -v dig >/dev/null; then
     # Each query is a new UDP flow, so they spread over both uplinks.
     nics() { jq -c '.NICs[] | {n: .Name, flows: .Total, in: .BytesIn, out: .BytesOut}' "$STATE/status.json" | tr '\n' ' '; echo; }
     sleep 2; echo "   before: $(nics)"
     a1=$(dns_answers 1.1.1.1); a2=$(dns_answers 8.8.8.8); a3=$(dns_answers 9.9.9.9)
     sleep 2; echo "   after:  $(nics)"
-    echo "   UDP DNS through net-merge: 1.1.1.1 $a1/12, 8.8.8.8 $a2/12, 9.9.9.9 $a3/12"
-    [ $((a1 + a2 + a3)) -ge 30 ] && pass "UDP DNS works through net-merge (36 queries, over both uplinks)" || fail "UDP DNS through net-merge: $((a1 + a2 + a3)) of 36 answered"
+    echo "   UDP DNS through MultiRouteNetwork: 1.1.1.1 $a1/12, 8.8.8.8 $a2/12, 9.9.9.9 $a3/12"
+    [ $((a1 + a2 + a3)) -ge 30 ] && pass "UDP DNS works through MultiRouteNetwork (36 queries, over both uplinks)" || fail "UDP DNS through MultiRouteNetwork: $((a1 + a2 + a3)) of 36 answered"
 fi
 
 echo "== 12 parallel downloads: both uplinks must carry traffic"
@@ -146,18 +146,18 @@ done
 echo "== off: adapter and routes go away, internet still works"
 "$BIN" off -state-dir "$STATE"
 sleep 1
-ip link show net-merge >/dev/null 2>&1 && fail "net-merge adapter still exists after off" || pass "adapter removed after off"
+ip link show MultiRouteNetwork >/dev/null 2>&1 && fail "MultiRouteNetwork adapter still exists after off" || pass "adapter removed after off"
 code=$(curl -4 -s --max-time 10 -o /dev/null -w '%{http_code}' https://example.com)
 [ "$code" = 200 ] && pass "internet works after off" || fail "internet after off: $code"
 
 echo "== crash: kill -9 must not leave the machine without internet"
-sudo "$BIN" run -include "$REAL,nmup-h" -state-dir "$STATE" -log "$STATE/net-merge-2.log" -stats 0 -for 120s &
+sudo "$BIN" run -include "$REAL,nmup-h" -state-dir "$STATE" -log "$STATE/MultiRouteNetwork-2.log" -stats 0 -for 120s &
 wait_on || fail "second start did not turn on"
 pid=$(jq -r .PID "$STATE/status.json")
 sudo kill -9 "$pid"
 sleep 1
-ip link show net-merge >/dev/null 2>&1 && fail "adapter survived kill -9" || pass "adapter gone after kill -9"
-ip -4 route | grep -q 'dev net-merge' && fail "routes survived kill -9" || pass "routes gone after kill -9"
+ip link show MultiRouteNetwork >/dev/null 2>&1 && fail "adapter survived kill -9" || pass "adapter gone after kill -9"
+ip -4 route | grep -q 'dev MultiRouteNetwork' && fail "routes survived kill -9" || pass "routes gone after kill -9"
 code=$(curl -4 -s --max-time 10 -o /dev/null -w '%{http_code}' https://example.com)
 [ "$code" = 200 ] && pass "internet works after kill -9" || fail "internet after kill -9: $code"
 

@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"net-merge/internal/control"
-	"net-merge/internal/rules"
+	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/rules"
 )
 
 func TestAddEditDeleteRuleWithoutStartingEngine(t *testing.T) {

@@ -2,10 +2,10 @@ package control
 
 import (
 	"net"
-	"net-merge/internal/engine"
-	"net-merge/internal/nics"
-	"net-merge/internal/rules"
-	"net-merge/internal/store"
+	"MultiRouteNetwork/internal/engine"
+	"MultiRouteNetwork/internal/nics"
+	"MultiRouteNetwork/internal/rules"
+	"MultiRouteNetwork/internal/store"
 	"testing"
 )
 
