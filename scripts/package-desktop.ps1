@@ -1,11 +1,14 @@
 # Packages MultiRoute next to MultiRouteNetwork.exe. Automatic updates stay off.
 # Requires Go, Node, and a WebView2 runtime on the machine that runs the window.
 param(
-    [string] $OutDir = "dist\multiroute"
+    [string] $OutDir = "dist\multiroute",
+    [string] $Version = ''
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
+if (-not $Version) { $Version = (Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim() }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid version: $Version" }
 
 Push-Location desktop\frontend
 try {
@@ -15,7 +18,7 @@ if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
 } finally { Pop-Location }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-go build -ldflags "-H=windowsgui" -o (Join-Path $OutDir "MultiRouteNetwork.exe") .\cmd\MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRouteNetwork.exe") .\cmd\MultiRouteNetwork
 if ($LASTEXITCODE -ne 0) { throw "MultiRouteNetwork engine build failed" }
 go build -o (Join-Path $OutDir "MultiRoute.exe") .\desktop
 if ($LASTEXITCODE -ne 0) { throw "MultiRoute desktop build failed" }
@@ -30,7 +33,7 @@ if (-not (Test-Path $wintun)) {
 }
 
 @(
-    "MultiRoute",
+    "MultiRoute $Version",
     "Built from the MIT MultiRouteNetwork engine. Third-party notices stay in the repository.",
     "WebView2 must be installed (current Windows 11 includes it).",
     "Automatic updates are disabled until a signed release channel exists.",

@@ -1,9 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 168" width="440" height="336">
   <title>MultiRoute</title>
-  <g transform="translate(62 4) scale(1.5)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
-    <path stroke="#0B7C8A" d="M14 50V14l18 18"/>
-    <path stroke="#1EBED3" d="M50 50V14L32 32"/>
-    <path stroke="#9CF0F8" d="M32 32v18m-6.5-6.5L32 50l6.5-6.5"/>
+  <g transform="translate(62 4) scale(1.5)">
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="15">
+      <path stroke="#0B7C8A" d="M11 53V13"/>
+      <path stroke="#1EBED3" d="M11 13L32 38L53 13"/>
+      <path stroke="#9CF0F8" d="M53 13V53"/>
+    </g>
+    <g fill="none" stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="13" r="3.6"/>
+      <circle cx="53" cy="13" r="3.6"/>
+      <circle cx="32" cy="38" r="3.6"/>
+      <path transform="translate(20 23.5) rotate(50)" d="M-3.2 -3.6L0.8 0L-3.2 3.6"/>
+      <path transform="translate(44 23.5) rotate(130)" d="M-3.2 -3.6L0.8 0L-3.2 3.6"/>
+    </g>
   </g>
   <text x="110" y="150" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif" font-size="34" font-weight="600" letter-spacing="-0.5" fill="#E5E5E5">Multi<tspan fill="#1EBED3">Route</tspan></text>
 </svg>

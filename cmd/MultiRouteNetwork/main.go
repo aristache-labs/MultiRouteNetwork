@@ -222,7 +222,7 @@ func formatNICs(snap []engine.SlotStats) string {
 
 // Set at build time: -X main.version=... and, for the windowless tray build, -X main.defaultCmd=tray.
 var (
-	version    = "dev"
+	version    = "0.4.5"
 	defaultCmd = ""
 )
 
@@ -253,11 +253,21 @@ func main() {
 		if err := platform.Autostart(args[0]); err != nil {
 			die(err)
 		}
-	case "_icon": // build helper: writes the tray icon as an .ico
+	case "_icon": // build helper: writes the app icon as .ico, as a 256 px .png, or as a hicolor PNG set into a directory
 		if len(args) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: MultiRouteNetwork _icon out.ico|out.png|hicolor-dir")
 			os.Exit(2)
 		}
-		if err := os.WriteFile(args[0], icon.ICO(true), 0o644); err != nil {
+		var err error
+		switch strings.ToLower(filepath.Ext(args[0])) {
+		case ".ico":
+			err = os.WriteFile(args[0], icon.AppICO(), 0o644)
+		case ".png":
+			err = os.WriteFile(args[0], icon.AppPNG(256), 0o644)
+		default:
+			err = icon.WriteHicolor(args[0])
+		}
+		if err != nil {
 			die(err)
 		}
 	case "tray":

@@ -1,9 +1,149 @@
 # Changelog
 
-What changed in each release. Each version's section becomes its GitHub release notes, so add the
-entry here before pushing a version tag.
+Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
+Current source version: **0.4.5**. See [README.md](README.md) for current behavior and limitations.
+
+Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
+work that accumulated after 0.3.7. Their dates record this documentation milestone,
+not six separate public releases. No corresponding tags or published assets are
+implied. Entries **0.3.7 and earlier** preserve the inherited engine history;
+references there to package hosts, upstream products or release availability are
+historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
+
+### Planned
+- Improve adapter-card and application-row layout when resizing the window or opening Settings; this work remains pending.
+
+## [0.4.5] - 2026-11-10
+
+Retrospective milestone: Windows packet-buffer efficiency and repeated performance validation. Current source version; not tagged or published.
+
+### Changed
+- Reused Windows TUN read buffers while retaining independent, reference-counted storage for packets held by the network stack.
+- Replaced per-packet `ToBuffer().Flatten()` allocation with reusable output storage and borrowed-view copying.
+- Preserved packet framing, MTU, queue size, native write semantics and the existing balancing algorithm.
+- Kept the upstream packet endpoint on other platforms; the buffer optimization applies to Windows.
+
+### Added
+- Added packet-integrity, buffer-growth, retained-packet, IPv4/IPv6 and blocked-IO shutdown tests, plus allocation microbenchmarks.
+- Added repeated Ethernet A/B measurements using identical builds apart from the buffer wrapper, without launching the GUI.
+
+### Fixed
+- Closed the native device if preparing the optimized packet endpoint fails.
+
+Performance evidence: sampled allocations fell approximately 94% in the profiled comparison.
+Eight subsequent A/B runs measured about 19% lower mean CPU/GiB with buffer reuse.
+Mean throughput was 733 versus 691 Mbit/s, but four pairs against an external server
+do not establish a universal speedup or rule out a smaller regression. These are
+local measurements, not hardware-independent performance guarantees.
+
+## [0.4.4] - 2026-11-10
+
+Retrospective milestone: project identity, state continuity and adapter metadata caching.
+
+### Changed
+- Renamed the module, command, engine executable and tunnel identity to `MultiRouteNetwork`; retained the desktop name `MultiRoute`.
+- Updated repository references to `aristache-labs/MultiRouteNetwork` and support links to `buymeacoffee.com/aristache`.
+- Cached adapter names, indices and visible VPN metadata for three seconds while sampling traffic counters every 250 ms.
+- Kept scheduler discovery, health checks, weights and adapter selection independent of the telemetry cache.
+- Made package-repository hosting explicit rather than assuming this fork owns inherited upstream infrastructure.
+
+### Fixed
+- Updated tunnel-filtering checks, including `TestOwnTunnelIsHidden`, for the renamed engine adapter.
+- Reset counter baselines after adapter identity changes, counter resets and failed reads to prevent false speed spikes.
+- Added shorter retries after adapter-enumeration failures instead of retaining stale lookup results.
+
+Existing local rules and usage were recovered from the legacy state directory during
+development, with backups. This recovery was a local maintenance operation, not an
+automatic migration promise for every installation. Back up legacy state before upgrading.
+
+## [0.4.3] - 2026-11-10
+
+Retrospective milestone: connection diagnostics and reproducible network comparisons.
+
+### Added
+- Added bounded, rotating `curl-routing.jsonl` diagnostics for identified curl connections, including scheduler eligibility and selection reasons.
+- Added connection IDs, process IDs, selected adapters, retry observations and confirmed socket-open events.
+- Added per-connection byte totals, interval and average rates, read/write terminal states and final close reasons.
+- Added parallel direct-versus-engine comparison scripts with routing checks, physical counters and CSV results.
+- Added loopback-only CPU, allocation, heap and goroutine capture workflows with saved configuration and binary fingerprints.
+
+### Changed
+- Distinguished attempted adapter selection from successfully opened connections in diagnostic analysis.
+- Kept diagnostic writes asynchronous and bounded; reported dropped records without recording URLs, payloads or executable paths.
+- Documented shared-router capacity: Ethernet and Wi-Fi on one WAN do not provide two independent internet connections.
+
+## [0.4.2] - 2026-11-10
+
+Retrospective milestone: live dashboard, application status and clearer speed displays.
+
+### Added
+- Added per-application running/not-running state and counts of added and running applications beside Applications.
+- Added `using` lists covering adapters with open connections, ordered by observed usage without primary/secondary labels.
+- Added separate download/upload negotiated Link Speed values on adapter cards; unavailable values remain unspecified.
+- Displayed configured application download and upload limits beside their corresponding rate bars.
+- Added adapter-wide download/upload limit controls and retained startup settings in the Settings panel.
+
+### Changed
+- Updated telemetry every 250 ms and retained 240 graph samples representing the latest 60 seconds.
+- Smoothed graphs and displayed rate transitions while preserving raw traffic accounting and limit enforcement.
+- Scaled each application bar from zero to its configured directional limit, or 100 Mbit/s when unlimited.
+- Clamped visual bars at 100%; the unlimited display scale does not impose a traffic limit.
+- Kept theme selection in the header and removed duplicate Dark/Light controls from Settings.
+- Displayed connected physical adapters and real VPNs while hiding the engine TUN and infrastructure virtual adapters.
+
+### Fixed
+- Kept `Use all` on the automatic scheduler and `Several adapters` on the same scheduler restricted to the selected subset.
+- Preserved simultaneous adapter use across multiple connections when lowest-latency selection is disabled.
+- Clarified that fastest-adapter selection intentionally chooses one adapter for new connections; existing connections stay pinned.
+
+## [0.4.1] - 2026-11-10
+
+Retrospective milestone: reliable control, startup and window lifecycle.
+
+### Added
+- Added a styled close dialog offering Hide to system tray or Exit, with a remembered-choice checkbox.
+- Added a Settings control to restore asking on close or change the remembered window-close behavior.
+- Added close-request recovery when the initial JavaScript event is missed.
+
+### Changed
+- Kept the configured Windows TUN and network stack ready across Stop/Start for faster subsequent resumes.
+- Closed routed TCP/UDP connections and pending dials at Stop, removed capture routes and restored egress settings.
+- Released the retained device and stack at Exit after flushing state and stopping routing.
+- Kept Start on the elevated `run -hidden` engine path rather than launching a separate tray-mode engine.
+
+### Fixed
+- Allowed adding and editing application rules while stopped, including when no engine pipe is available.
+- Fixed transient busy-pipe failures and reduced control/telemetry contention.
+- Replaced premature startup communication errors with startup-aware waiting and retry behavior.
+- Made adapters and configured applications available before Start; stopped routing no longer accumulates routed usage.
+- Restored the window X action when the close-event handoff failed to display its dialog.
+
+## [0.4.0] - 2026-11-10
+
+Retrospective milestone: MultiRoute Windows desktop and per-application controls.
+
+### Added
+- Added an unelevated Wails v3, React/TypeScript and WebView2 desktop communicating with the elevated engine over a per-user named pipe.
+- Added Overview, Usage and Settings views with adapter cards, application icons, combined traffic graphs and routing controls.
+- Added explicit application registration; Overview lists added applications rather than every operating-system process.
+- Added executable-name and exact-path rules; exact-path matches take precedence and unidentified processes remain Unknown.
+- Added all/one/several adapter policies, wait/other-adapter fallbacks, and optional lowest-latency selection with an eight-second hold.
+- Added Windows TCP/UDP process ownership lookup and per-flow routing policy applied when connections open.
+- Added per-application and per-adapter directional speed limits; applicable limits combine and empty fields mean unlimited.
+- Added daily/monthly data caps counting download plus upload, 80% warnings and flow blocking at the cap.
+- Added local SQLite usage history, adapter day/month totals, date-range views and CSV export.
+- Added per-app plain TCP/UDP port-53 DNS choices: Windows default, Cloudflare, Google, Quad9 and custom servers.
+- Added separate Start with Windows and Start routing settings, plus dark/light themes.
+- Added a desktop packaging script producing the GUI, engine, driver and accompanying notices.
+
+### Changed
+- Shared control logic between the desktop, tray and engine while retaining legacy status and control markers.
+- Applied rule edits to new connections while keeping existing connections pinned to their original adapter.
+- Kept preferred-adapter selection separate from the Windows default route.
+- Kept usage history local without adding accounts, activation, commercial licensing or anonymous usage reporting.
+- Kept update controls as an unavailable visual placeholder; automatic installation remains disabled pending a signed release channel.
 
 ## [0.3.7] - 2026-11-09
 

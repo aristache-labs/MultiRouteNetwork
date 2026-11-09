@@ -1,481 +1,257 @@
 <p align="center">
-  <img src="docs/icon.png" width="128" alt="MultiRouteNetwork icon">
+  <img src="docs/icon.png" width="96" alt="MultiRouteNetwork icon">
 </p>
 
-<h1 align="center">MultiRouteNetwork</h1>
+<h1 align="center">MultiRouteNetwork · MultiRoute</h1>
 
 <p align="center">
-  <strong>Use all your internet connections at the same time.</strong><br>
-  Combine Wi-Fi, Ethernet and phone hotspots, so downloads, games and browsers get the speed of every connection added up.
+  <strong>Route applications across your network adapters.</strong><br>
+  Use multiple connections together when an application opens multiple network flows.
 </p>
 
 <p align="center">
   <a href="https://github.com/aristache-labs/MultiRouteNetwork">Repository</a> ·
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork/releases/latest">Download</a> ·
-  <a href="#android">Android</a> ·
-  <a href="#install">Install</a> ·
-  <a href="#add-a-second-connection">Add a second connection</a> ·
-  <a href="#troubleshooting">Troubleshooting</a> ·
-  <a href="docs/DEVELOPING.md">How it works</a>
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="docs/DEVELOPING.md">How it works</a> ·
+  <a href="https://github.com/aristache-labs/MultiRouteNetwork/issues">Issues</a> ·
+  <a href="https://buymeacoffee.com/aristache">Buy me a coffee</a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork/actions/workflows/ci.yml"><img src="https://github.com/aristache-labs/MultiRouteNetwork/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork/releases"><img src="https://img.shields.io/github/v/release/aristache-labs/MultiRouteNetwork" alt="Latest release"></a>
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork/releases"><img src="https://img.shields.io/github/downloads/aristache-labs/MultiRouteNetwork/total" alt="Downloads"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/aristache-labs/MultiRouteNetwork" alt="MIT license"></a>
-  <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-blue" alt="Windows, macOS, Linux and Android">
-  <a href="https://buymeacoffee.com/aristache"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-aristache-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
-</p>
+**Current source version: 0.4.5.** The Windows desktop application is **MultiRoute**;
+its engine, Go module and repository are **MultiRouteNetwork**. The project builds
+on the MIT-licensed net-merge engine. Copyright and third-party notices remain applicable.
 
-<p align="center">
-  <a href="https://trendshift.io/repositories/301802?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-301802" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/301802/daily?language=Go" alt="aristache-labs%2FMultiRouteNetwork | Trendshift" width="250" height="55"/></a>
-  <a href="https://trendshift.io/repositories/301802?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-301802" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/301802/weekly?language=Go" alt="aristache-labs%2FMultiRouteNetwork | Trendshift" width="250" height="55"/></a>
-</p>
+Versions 0.4.0–0.4.5 are retrospective milestones documenting work accumulated
+after 0.3.7, not a claim that six separate releases were published. See the
+[changelog](CHANGELOG.md) for the complete breakdown. A source version does not
+imply a matching GitHub tag, installer or downloadable release.
 
-<p align="center">
-  <img src="docs/demo.gif" width="600" alt="Speed test on a Mac with Wi-Fi and an Android phone: the MultiRouteNetwork menu shows both connections carrying traffic, and the download reaches about 326 Mbit/s">
-  <br>
-  <sub>A Mac with Wi-Fi + an Android phone. The menu shows both connections working at once. <a href="docs/demo.mp4">Watch the full 45-second video.</a></sub>
-</p>
+## What is included
 
-MultiRouteNetwork uses all your network adapters together. It works on **Windows, macOS and Linux**. It is free.
-There is no account, no server and no VPN.
+The Windows desktop uses Wails v3, React/TypeScript and WebView2. Its window runs
+without elevation and controls a separately elevated engine through a per-user
+named pipe. No account, activation service or anonymous usage reporting is added.
 
-A real test with Wi-Fi + an Android USB tether + an iPhone hotspot, 9 downloads at once:
-**232-303 Mbit/s**. The fastest connection alone gave about 121 Mbit/s.
+| Area | Current behavior |
+|---|---|
+| Overview | Connected adapter cards, registered applications, running state, traffic rates and graphs |
+| Application routing | All eligible adapters, one adapter, or a selected subset; configurable fallback |
+| Matching | Executable name or exact path; exact-path rules take precedence |
+| Limits | Separate download/upload limits for applications and adapters |
+| Caps | Daily/monthly download-plus-upload caps, warning at 80%, blocking at the cap |
+| Usage | Local SQLite history; Today, 7 days, 30 days, This month, All; CSV export |
+| DNS | Per-app Windows default, Cloudflare, Google, Quad9 or custom plain DNS |
+| Startup | Separate Start with Windows and Start routing when it opens controls |
+| Window | Dark/light header toggle; styled Hide to tray / Exit prompt with remembered choice |
+| Updates | Visual placeholder; automatic installation remains disabled |
 
-| Windows: hover the icon | Windows: the menu | macOS: the menu bar |
-|---|---|---|
-| ![Tooltip: Merging, speed of each adapter and the total](docs/tray-tooltip.png) | ![Menu: total, each adapter's speed and flows, IPv6 option, Pause merging, Quit](docs/tray-menu.png) | ![macOS menu: total 399 Mbit/s, en0 and feth0 each with their flows, Pause merging, Quit](docs/tray-menu-macos.png) |
+Overview shows only applications you add with **+ Add app**. Other routed traffic
+can still appear in Usage. Multiple processes matching one application rule are
+aggregated; unidentified owners remain **Unknown** rather than being guessed.
 
-## How it helps
+The underlying engine retains command-line/tray code for Windows, macOS and Linux.
+The Wails desktop and the recent buffer/lifecycle optimizations described here
+are Windows work; they do not establish equivalent desktop features or performance
+on other platforms. This repository does not contain an Android app.
 
-MultiRouteNetwork gives every new connection to one of your links. When an app opens many connections, they
-spread over all your links.
+## How routing works
 
-- **Good for:** Steam and game downloads, browsers, system updates, cloud uploads (Google Drive),
-  download managers like IDM, torrents.
-- **Not for:** one single connection. One connection always uses one link, so one big file from one
-  connection does not get faster. Browsers can split a download into several connections; see the tip
-  under [Use it](#use-it).
-- **Works for every app**, TCP and UDP, IPv4 and IPv6. You do not set up a proxy.
-- **Smart:** faster links get more connections. A link with no internet gets none until it works again.
-- **Safe:** if MultiRouteNetwork crashes, your internet keeps working.
-- **Light:** about 0.18 CPU cores per 100 Mbit/s.
+Every new connection is assigned to one eligible adapter and stays pinned there.
+An application opening several connections can use several adapters simultaneously.
+A single TCP download, such as one ordinary `curl` transfer, is not split across links.
 
-## Install
+- **Use all** uses the automatic weighted scheduler across eligible adapters.
+- **Several adapters** uses the same scheduler within the selected subset.
+- **One adapter** pins new flows to the selected adapter, subject to its fallback rule.
+- **Use whichever adapter answers fastest** intentionally chooses one permitted
+  adapter for new connections, with an eight-second hold to reduce switching.
+- Rule changes affect new connections. Existing ones retain their adapter.
+- A preferred adapter in MultiRoute does not change the Windows default route.
 
-**macOS and Linux**: paste this into a terminal.
+Automatic balancing uses busy-flow load and smoothed capacity estimates, with
+health checks, cooldowns and retry exclusions. Idle TCP connections are discounted.
+See [DEVELOPING.md](docs/DEVELOPING.md) for the exact policy and IPv6 trade-offs.
 
-```
-curl -fsSL https://raw.githubusercontent.com/aristache-labs/MultiRouteNetwork/main/install.sh | sh
-```
+**Ethernet and Wi-Fi connected to the same router share its WAN capacity.** They
+are not two independent internet connections. A phone hotspot may provide a
+separate upstream, but shared bottlenecks and the server can still limit total speed.
 
-**Windows**: paste this into PowerShell.
+Real VPNs such as Tailscale may appear as informational cards but are not routing
+candidates. The engine TUN and WSL/Docker/Hyper-V infrastructure adapters are hidden.
 
-```
-irm https://raw.githubusercontent.com/aristache-labs/MultiRouteNetwork/main/install.ps1 | iex
-```
+## Run the Windows desktop
 
-Antivirus blocked it? Download [MultiRouteNetwork-setup.exe](https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-setup.exe)
-and double-click it instead.
+Build the package from source as described below, or use matching assets actually
+available on the [repository's releases page](https://github.com/aristache-labs/MultiRouteNetwork/releases).
+This README does not assume an installer or hosted package repository exists.
 
-That's it: MultiRouteNetwork is installed and its icon appears in the menu bar or tray. On Linux the script
-uses your package manager (apt, dnf, zypper, apk or pacman) and on macOS Homebrew when you have it, so
-MultiRouteNetwork updates with the rest of your system. To start it at sign-in, tick *Start at sign-in* in its menu.
+Keep these files together in `dist/multiroute`:
 
-**Android**: see [Android](#android) below.
+- `MultiRoute.exe` — desktop window and its system tray controls.
+- `MultiRouteNetwork.exe` — routing engine.
+- `wintun.dll` and `wintun-LICENSE.txt` — native driver and its license.
+- `go-winio-LICENSE.txt` and `README.txt` — accompanying package notices/instructions.
 
-> **Want to choose the connection for each app?** [RoutEngine](https://routengine.net/?utm_source=MultiRouteNetwork&utm_medium=readme-callout) is the
-> upgraded commercial version of MultiRouteNetwork, for Windows, macOS and Linux. Pick an adapter per app, add a fallback, and set a speed
-> limit or data cap per app. Free for personal use, Pro for work.
+WebView2 is required. Launch **MultiRoute.exe** yourself. Start requests elevation
+for the engine and launches it as `run -hidden`; it does not launch engine tray mode.
+Unsigned builds may receive Windows trust or antivirus prompts.
 
-<details>
-<summary><strong>Rather type the commands yourself?</strong> One block per system, each ready to paste.</summary>
-<br>
+### Start, Stop and Exit
 
-**macOS without Homebrew**:
+Adapters and saved applications are visible before routing starts. You can add or
+edit application rules while stopped, including when the engine is not running.
 
-```
-curl -fsSL https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-macos-universal.tar.gz | tar -xz -C /tmp MultiRouteNetwork && sudo /tmp/MultiRouteNetwork install && MultiRouteNetwork tray
-```
+- **Start** enables routing and statistics. The first Start performs full TUN setup.
+- **Stop** closes routed TCP/UDP sockets and pending dials, removes capture routes
+  and pauses routed accounting. The Windows adapter and stack remain prepared
+  for faster subsequent starts. Applications may need to reconnect.
+- **Hide to system tray** hides the window and leaves the engine's current state intact.
+- **Exit** flushes state, stops routing and closes the engine, retained adapter and stack.
 
-**Linux package repositories / Homebrew**: a package host and tap have not been
-configured for this fork. Use source builds or assets actually available on our
-[releases page](https://github.com/aristache-labs/MultiRouteNetwork/releases).
-The build scripts retain packaging support but require an explicitly configured host.
+The window X shows a styled choice between Hide and Exit. Its checkbox remembers
+the selected action. Change that preference in **Settings → When closing the window**.
+A cancelled elevation prompt or a startup delay is distinct from an established
+engine communication failure.
 
-**Any other Linux** (any CPU):
+Start with Windows starts the window in the tray. Start routing when it opens is
+a separate setting; enabling one does not imply enabling the other.
 
-```
-curl -fsSL https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-linux-$(uname -m).tar.gz | tar -xz -C /tmp MultiRouteNetwork && sudo install -m 755 /tmp/MultiRouteNetwork /usr/local/bin/ && sudo setcap cap_net_admin,cap_net_raw+ep /usr/local/bin/MultiRouteNetwork
-```
+## Rates, graphs and limits
 
-**Windows by hand**: download [MultiRouteNetwork-setup.exe](https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-setup.exe)
-and run it. Windows may warn because the app is not signed yet: click *More info*, then *Run anyway*.
-There is also a [portable zip](https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-portable.zip).
+Traffic counters update every **250 ms**. Graphs retain **60 seconds** (240 samples),
+with cyan for download and yellow for upload. Display transitions are smoothed;
+raw byte accounting and traffic enforcement do not use interpolated display values.
 
-Then start it with `MultiRouteNetwork tray` (Linux, macOS) or from the Start menu (Windows).
-</details>
+Each application's `using` text lists adapters with open connections, ordered by
+observed usage. Running state reflects process presence, not whether data is moving.
 
-<details>
-<summary><strong>Good to know</strong></summary>
-<br>
+Application rate bars start at zero. With a directional speed limit, that limit
+is the bar maximum. Without a limit, the visual maximum is **100 Mbit/s**. Values
+above the maximum fill the bar; they remain visible numerically. This display scale
+never imposes a 100 Mbit/s traffic cap and is not scaled to the fastest app or Link Speed.
 
-- **Which CPUs:** x86-64, ARM64 and Apple Silicon, ARMv7, ARMv6 (Raspberry Pi), x86 32-bit, RISC-V,
-  PowerPC (ppc64le), s390x and LoongArch.
-- **No password prompts:** the Linux packages give MultiRouteNetwork the network rights it needs (`setcap`), and on
-  macOS `MultiRouteNetwork install` adds one rule so that only `MultiRouteNetwork tray` can run as root without a password.
-- **Linux tray icon:** needs a desktop with StatusNotifierItem support: KDE, XFCE, Cinnamon, LXQt, Budgie,
-  or GNOME with the *AppIndicator and KStatusNotifierItem Support* extension (Ubuntu already has it).
-- **Firewall:** if it blocks unknown traffic, trust the `MultiRouteNetwork` interface
-  (for example `firewall-cmd --zone=trusted --add-interface=MultiRouteNetwork`).
-- **Signed repositories:** apt, dnf, zypper and pacman use the key in
-  [`packaging/apt-signing-key.asc`](packaging/apt-signing-key.asc), fingerprint
-  `0168 C7AB 7772 1656 9048 11AE 904F 61E7 F4F1 C2A1`.
-</details>
+Adapter cards show negotiated **Link Speed separately for download and upload**
+when available. These are link-layer rates, not measurements of internet capacity
+or guaranteed throughput. Unsupported values are shown as unavailable.
 
-## Android
+Application-wide and applicable adapter limits combine. Empty fields mean unlimited.
+Small UDP traffic counts toward application limits. Data caps count download plus
+upload; reaching the cap stops that application's routed flows for the period.
 
-MultiRouteNetwork for Android uses Wi-Fi and mobile data at the same time. No root, no account, no server. It is
-new (beta).
+## Usage, state and limitations
 
-1. On your phone, download
-   [MultiRouteNetwork-android.apk](https://github.com/aristache-labs/MultiRouteNetwork/releases/latest/download/MultiRouteNetwork-android.apk).
-2. Open it and install it. If Android asks, allow your browser or file manager to install apps.
-3. Open **MultiRouteNetwork**, tap the power button and tap **OK** on the VPN prompt.
-4. Optional: add the **MultiRouteNetwork** tile to Quick Settings to turn it on and off with one tap.
+Rules, settings and usage are stored locally in
+`%LOCALAPPDATA%\MultiRouteNetwork\multiroute.db`; window preferences are stored
+alongside it. Usage covers traffic observed through the engine, not historical
+Windows traffic from before installation. Adapter counters and per-application
+payload totals measure different layers and need not match exactly.
 
-It needs Android 8.0 or newer.
+If upgrading from a legacy `net-merge` state directory, back it up first. Local
+state recovery performed during development is not a universal automatic migration.
+If the application list appears empty after a rename, preserve both state directories
+before attempting recovery.
 
-- **Faster:** apps that open many connections at once, like web pages, torrents, cloud backups and download
-  managers (ADM with several parts).
+Per-app DNS only covers ordinary TCP/UDP port 53 traffic routed through the engine.
+Encrypted DNS, application-owned resolvers and Windows resolver traffic outside
+that path are not covered. One connection remains on one adapter; existing flows
+do not migrate automatically when you edit a rule.
 
-**Limitations**
+Automatic updates are not implemented as an active installation channel. The
+Settings controls are placeholders until a signed release channel is available.
+Any future update installation must happen while routing is stopped.
 
-- **One connection stays on one network.** A Play Store download, a single browser download and one video
-  mostly use one connection, so they don't get faster. We measured a 1 GB Play Store download: all of it went
-  over one connection. Splitting one connection over two networks needs a server in the middle, and MultiRouteNetwork
-  doesn't use one.
-- **Mobile data stays on** while MultiRouteNetwork runs, so keep an eye on your data plan.
-- **One VPN at a time:** Android lets only one VPN app run, so MultiRouteNetwork can't run next to another VPN.
-- **Problems?** [Open an issue](https://github.com/aristache-labs/MultiRouteNetwork/issues/new/choose) and pick *Android*.
-  The code is in [MultiRouteNetwork/android](https://github.com/aristache-labs/MultiRouteNetwork).
+**Known UI work:** adapter cards and application rows still need responsive layout
+improvements at narrow window sizes and with Settings open. This remains pending.
 
-## Uninstall
+## Build and verify
 
-**macOS and Linux**: paste this into a terminal. It stops MultiRouteNetwork and removes it the way it was
-installed (Homebrew, apt, dnf, zypper, apk, pacman or the download), with its repository and key.
+Requires Go as specified in `go.mod`, Node/npm for the frontend, Windows for the
+desktop package and WebView2 on the machine running it. From the repository root:
 
-```
-curl -fsSL https://raw.githubusercontent.com/aristache-labs/MultiRouteNetwork/main/install.sh | sh -s -- uninstall
-```
+```powershell
+# Run tests without starting the GUI.
+go test ./...
+go test -race ./internal/tun ./internal/control ./internal/rules ./internal/engine
+go vet ./...
 
-**Windows**: paste this into PowerShell, or use *Settings > Apps > Installed apps > MultiRouteNetwork > Uninstall*.
-
-```
-& "$env:ProgramFiles\MultiRouteNetwork\MultiRouteNetwork.exe" quit; Start-Process "$env:ProgramFiles\MultiRouteNetwork\unins000.exe" '/SILENT' -Verb RunAs -Wait
-```
-
-Your network goes back to normal as soon as MultiRouteNetwork stops: it removes its virtual adapter and routes
-when it quits, and even after a crash.
-
-<details>
-<summary><strong>Rather type the commands yourself?</strong> One block per way you installed it.</summary>
-<br>
-
-Each block first stops the tray and turns off start at sign-in, then removes MultiRouteNetwork.
-
-**Homebrew** (macOS):
-
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo MultiRouteNetwork uninstall; brew uninstall MultiRouteNetwork
+# Build frontend and package GUI/engine; does not launch them.
+.\scripts\package-desktop.ps1
 ```
 
-**macOS without Homebrew**:
+`VERSION` records the current source milestone. The desktop packaging script reads
+it by default and accepts `-Version X.Y.Z` to override the engine build stamp.
+`MultiRouteNetwork.exe version` reports the engine version. Generic builds also
+have a matching source default; tagged builds can override it with `-X main.version=...`.
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo MultiRouteNetwork uninstall
-```
+For manual builds:
 
-**Debian, Ubuntu, Linux Mint, Pop!_OS, Raspberry Pi OS** (apt):
+```powershell
+Push-Location desktop/frontend
+npm ci
+npm run build
+Pop-Location
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo apt remove -y MultiRouteNetwork && sudo rm -f /etc/apt/sources.list.d/MultiRouteNetwork.list /usr/share/keyrings/MultiRouteNetwork.gpg
-```
-
-**Fedora, RHEL, Rocky, Alma** (dnf):
-
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo dnf remove -y MultiRouteNetwork && sudo rm -f /etc/yum.repos.d/MultiRouteNetwork.repo
-```
-
-**openSUSE** (zypper):
-
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo zypper remove -y MultiRouteNetwork && sudo zypper removerepo MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=0.4.5" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
+go build -o dist/multiroute/MultiRoute.exe ./desktop
 ```
 
-**Arch, Manjaro, EndeavourOS** (pacman):
+The separate legacy installer/tray script, `scripts/build.ps1`, reads `VERSION`
+by default too. It recreates `dist` and requires Inno Setup; use the desktop
+packaging script for the Wails package. Building does not publish a release or
+replace an installed application. Keep license files with redistributed binaries.
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo pacman -R --noconfirm MultiRouteNetwork && sudo sed -i '/^\[MultiRouteNetwork\]$/,/^Server = .*MultiRouteNetwork/d' /etc/pacman.conf && sudo pacman-key --delete 0168C7AB77721656904811AE904F61E7F4F1C2A1
-```
+Linux/macOS engine build and packaging details remain in
+[DEVELOPING.md](docs/DEVELOPING.md). Package-host and Homebrew publishing must be
+configured for this fork rather than inferred from the inherited changelog.
 
-**Alpine** (apk):
+## Diagnostics and performance
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo apk del MultiRouteNetwork && sudo sed -i -e '\#github.com/aristache-labs/MultiRouteNetwork/apk#d' /etc/apk/repositories && sudo rm -f /etc/apk/keys/MultiRouteNetwork.rsa.pub
-```
+Identified curl flows write bounded, rotating `curl-routing.jsonl` records in the
+state directory. They include selection reasons, opened adapters, byte counts,
+rates and close states. Selection attempts alone do not prove successful routing.
+The log excludes URLs, payloads, addresses and executable paths.
 
-**Homebrew** (Linux):
+`scripts/compare-downloads.ps1` compares direct and engine downloads with equal
+stream counts and physical-counter checks. It asks you to control routing/rules
+and does not start the GUI. Downloads consume real bandwidth; see the script's
+parameters and [diagnostic documentation](docs/DEVELOPING.md) before running it.
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; brew uninstall MultiRouteNetwork
-```
+The engine supports a **loopback-only** Go profiler through `-pprof`. Windows
+telemetry caches adapter identity metadata for three seconds while refreshing
+traffic counters every 250 ms. Windows packet IO reuses buffers without changing
+the scheduler or packet ownership guarantees.
 
-**Any other Linux** (the download):
+Local validation after buffer reuse measured approximately **94% fewer sampled
+allocated bytes**. Eight alternating Ethernet A/B runs measured **19% lower mean
+CPU per transferred GiB**. Throughput averaged 733 Mbit/s with reuse versus
+691 Mbit/s without; only four pairs against an external server were measured,
+so this is not a guaranteed speedup or proof that smaller regressions are impossible.
+CPU normalization uses interpolated connection counters. Repeated A/B comparison
+was performed without CPU profiling active; allocation measurements came from
+separate captures. Do not treat cumulative allocations as resident RAM.
 
-```
-MultiRouteNetwork quit; MultiRouteNetwork autostart off; sudo rm -f /usr/local/bin/MultiRouteNetwork
-```
+## Engine commands
 
-**Windows portable zip**: run `MultiRouteNetwork.exe autostart off` in its folder, quit the tray, then delete the folder.
-
-**NixOS**: remove `programs.MultiRouteNetwork` (and the `MultiRouteNetwork` input) from your configuration and rebuild.
-</details>
-
-### NixOS
-
-```nix
-# flake.nix
-inputs.MultiRouteNetwork.url = "github:aristache-labs/MultiRouteNetwork";
-
-# configuration.nix (with `inputs` passed via specialArgs)
-imports = [ inputs.MultiRouteNetwork.nixosModules.default ];
-programs.MultiRouteNetwork = {
-  enable = true;
-  autostart = true;   # optional: start the tray in every graphical session
-};
-```
-
-To try it without installing: `sudo nix run github:aristache-labs/MultiRouteNetwork -- run`.
-
-## Add a second connection
-
-MultiRouteNetwork needs **two or more** real connections. Use Wi-Fi plus one of these: a phone (USB tethering or
-hotspot), an Ethernet cable, or a second Wi-Fi. Plug it in and MultiRouteNetwork adds it within a few seconds.
-When you unplug it, its connections move to the others.
-
-**Windows and Linux:** plug the phone in and turn on *USB tethering* (Android) or *Personal Hotspot*
-(iPhone). That is all.
-
-**Mac with an iPhone** (nothing extra to install)
-1. Plug the iPhone in with a cable. Tap *Trust* on the iPhone if it asks.
-2. On the iPhone, open *Settings > Personal Hotspot* and turn on *Allow Others to Join*.
-3. An **iPhone USB** network appears on the Mac. MultiRouteNetwork adds it in a few seconds.
-
-**Mac with an Android phone** (needs the app **TetherKit**)
-
-macOS cannot use Android USB tethering by itself. The app **TetherKit** adds that support.
-1. Install and open TetherKit.
-2. Plug the phone in and turn on *USB tethering* in the phone's settings.
-3. Click **Apply** in TetherKit. MultiRouteNetwork adds the new network in a few seconds.
-
-> **Start MultiRouteNetwork first, then connect the Android phone.** macOS drops the TetherKit connection each
-> time MultiRouteNetwork starts or quits. Pausing and resuming is safe: MultiRouteNetwork keeps its virtual adapter while
-> paused. If the phone link disappears, click **Apply** in TetherKit again. The iPhone is not affected.
-
-A phone uses its mobile data, so part of your traffic goes through it while MultiRouteNetwork runs. Quit
-MultiRouteNetwork when you do not want that.
-
-## Use it
-
-1. Start MultiRouteNetwork. A tray icon appears (menu bar on Mac).
-2. The icon is **green** when it is merging and **grey** when it is paused.
-3. **It pauses by itself** when fewer than two connections have internet, because there is nothing to
-   merge, and the menu says *Paused: one connection*. It **starts again by itself** when a second
-   connection works. If you pause or start it yourself, that choice wins: it will not start again after
-   you paused it. Untick *Pause when there is only one connection* in the menu to switch this off, or run
-   `MultiRouteNetwork tray -auto-pause=false`.
-4. **Hover** the icon to see the speed of each connection and the total.
-5. **Right-click** the icon (on Mac, click it) to open the menu. It shows each connection's speed, how
-   many connections MultiRouteNetwork gave it, and the buttons *Pause merging* / *Start merging* and *Quit*. The
-   line above *Quit* is the version you are running, like `v0.3.3`. It reads the newest release number
-   from GitHub (at start, and again every 6 hours) and turns into *Update to v0.3.4* if there is one;
-   click it to open the release page. Click a connection to cap it at 1, 2, 5, 10, 20, 50 or 100 Mbit/s
-   (or *Unlimited*). For any other speed, from a terminal: `MultiRouteNetwork limit "Ethernet 2" 25` (Mbit/s; 0 or
-   `unlimited` removes the cap), and `MultiRouteNetwork limit` lists what is set. The cap covers its downloads and
-   uploads and is remembered after a restart. Only traffic MultiRouteNetwork relays is capped: an app bound directly
-   to an adapter (for example qBittorrent on a fixed interface) ignores it.
-6. To start it at sign-in: tick *Start at sign-in* in the menu (or the box in the Windows installer, or run
-   `MultiRouteNetwork autostart on`). On a Mac this needs `sudo MultiRouteNetwork install` once.
-
-Tips:
-- Torrent clients already use every connection. Leave qBittorrent's network interface on *Any interface*.
-- **Faster browser downloads.** A browser downloads a file over one connection, so it uses one link. Chrome,
-  Edge, Brave and other Chromium browsers can split it over several connections instead:
-  1. Open `chrome://flags/#enable-parallel-downloading` (Edge: `edge://flags/#enable-parallel-downloading`,
-     Brave: `brave://flags/#enable-parallel-downloading`).
-  2. Set *Parallel downloading* to *Enabled* and click *Relaunch*.
-
-  Firefox has no such setting; for big files use a download manager, for example `aria2c -x 8 -s 8 <link>`.
-  Splitting only helps when the server allows downloading parts of a file, which most large download
-  sites do.
-- Leave *Use all adapters (IPv6 only if every adapter has it)* ticked. Untick it only if you must reach a
-  site that only has IPv6.
-- `MultiRouteNetwork list` shows which connections are used and why others are skipped. `MultiRouteNetwork status`
-  shows live numbers.
-
-## Troubleshooting
-
-<details>
-<summary><strong>A second connection does not make things faster</strong></summary>
-<br>
-
-You only gain speed when each connection reaches the internet by its own path. Wi-Fi from your home
-router plus a phone on mobile data works. Wi-Fi and Ethernet plugged into the **same router** do not: they
-share one internet line, so the total stays the same.
-
-Also remember that one connection always uses one link. Many parallel connections (Steam, browsers,
-download managers) are what speed up. Run `MultiRouteNetwork status` to see how many connections each link carries.
-</details>
-
-<details>
-<summary><strong>It does nothing while a VPN is on</strong></summary>
-<br>
-
-A VPN app on your computer (ProtonVPN, NordVPN and others) sends all your internet through itself.
-MultiRouteNetwork then has nothing to share, so nothing gets faster. Using the VPN on only one link is not
-safe either: anything sent over the other link skips the VPN.
-
-Fix: set up the VPN on your routers instead, and turn the VPN app off on the computer. Most VPN
-providers have a guide for routers. MultiRouteNetwork then works as normal, and all your traffic still goes
-through the VPN.
-</details>
-
-
-
-<details>
-<summary><strong>A connection does not show up</strong></summary>
-<br>
-
-Run `MultiRouteNetwork list`. It shows which connections are used and why the others are skipped, for example
-"no default gateway" (the link has no internet yet).
-
-- **iPhone on a Mac:** plug it in, tap *Trust*, and turn on *Settings > Personal Hotspot > Allow Others to
-  Join*. If the **iPhone USB** network in *System Settings > Network* stays inactive, turn off its
-  **Disable unless needed** switch.
-- **Android on a Mac:** install **TetherKit** and click **Apply** (see above).
-- **Phone on Windows:** if the phone does not appear in *Network Settings*, install your phone maker's USB
-  driver.
-</details>
-
-<details>
-<summary><strong>The Android connection disappears on a Mac</strong></summary>
-<br>
-
-macOS drops the TetherKit connection each time MultiRouteNetwork starts or quits (pausing and resuming is safe).
-Start MultiRouteNetwork first, then connect the phone. If it vanishes, click **Apply** in TetherKit again.
-</details>
-
-<details>
-<summary><strong>Windows uses only one network</strong></summary>
-<br>
-
-Windows can switch Wi-Fi off when Ethernet is plugged in. Open the Group Policy Editor (`gpedit.msc`),
-go to *Computer Configuration > Administrative Templates > Network > Windows Connection Manager*, and set
-**Minimize the number of simultaneous connections to the Internet or a Windows domain** to **Disabled**.
-</details>
-
-<details>
-<summary><strong>macOS says it cannot open MultiRouteNetwork, or Windows says "protected your PC"</strong></summary>
-<br>
-
-The apps are not code-signed yet. On macOS run `xattr -d com.apple.quarantine MultiRouteNetwork`. On Windows click
-*More info*, then *Run anyway*.
-</details>
-
-<details>
-<summary><strong>The menu says "Paused: one connection"</strong></summary>
-<br>
-
-MultiRouteNetwork only has something to do with two or more connections that have internet, so it waits. Plug
-in or connect the second one (see *Add a second connection*) and it starts by itself after a few seconds.
-To merge anyway, choose *Start merging* (it then stays on until a second connection has come and gone), or
-untick *Pause when there is only one connection*.
-
-Switching merging on or off cuts the connections that are open at that moment, which is why it waits 10
-seconds with nothing moving before pausing (2 minutes if a download or upload is still going) and
-3 seconds before resuming,
-and never switches by itself more than once every 30 seconds.
-</details>
-
-<details>
-<summary><strong>I cannot find the tray icon</strong></summary>
-<br>
-
-On Windows it may be behind the `^` arrow next to the clock. On macOS it is in the menu bar. On Linux the
-desktop needs StatusNotifierItem support (KDE, XFCE, Cinnamon, LXQt, Budgie, or GNOME with the *AppIndicator
-and KStatusNotifierItem Support* extension).
-</details>
-
-<details>
-<summary><strong>A site asks me to log in again</strong></summary>
-<br>
-
-MultiRouteNetwork may use a different IP for each connection, and some sites tie your login to one IP. That is a
-limit of splitting connections over several links.
-</details>
-
-## Commands
-
-```
-MultiRouteNetwork tray            tray icon (the normal way to run it)
-MultiRouteNetwork on | off        start / pause merging in the running tray
-MultiRouteNetwork quit            pause and close the tray
-MultiRouteNetwork status | list   live numbers / which connections are used
-MultiRouteNetwork autostart on|off|status
-MultiRouteNetwork socks           plain SOCKS5 proxy on 127.0.0.1:1080 (no admin, per app)
-MultiRouteNetwork cleanup         remove leftover routes after a crash
-MultiRouteNetwork install         macOS only: `sudo MultiRouteNetwork install` (see above)
+```text
+MultiRouteNetwork run -hidden     headless elevated engine used by the Windows desktop
+MultiRouteNetwork tray            legacy tray application
+MultiRouteNetwork on | off        start / pause the running engine
+MultiRouteNetwork quit            stop and exit the engine
+MultiRouteNetwork status | list   status and adapter information
+MultiRouteNetwork limit           inspect saved legacy adapter caps
+MultiRouteNetwork socks           SOCKS5 proxy, default 127.0.0.1:1080
+MultiRouteNetwork cleanup         remove leftover capture routes after a failure
+MultiRouteNetwork version         engine build version
 ```
 
-More flags and details are in [docs/DEVELOPING.md](docs/DEVELOPING.md).
+Use the desktop startup settings for the Wails application; legacy tray autostart
+commands configure a different launch path. Advanced flags, platform setup and
+profiling instructions are in [DEVELOPING.md](docs/DEVELOPING.md).
 
-## Want to choose the connection for each app?
+## Project and support
 
-[RoutEngine](https://routengine.net/?utm_source=MultiRouteNetwork&utm_medium=readme) is the upgraded version of MultiRouteNetwork, by the same developer. Run Steam over both connections, your browser over Ethernet with Wi-Fi as a backup, and another app over Wi-Fi alone. Set a speed limit or a data cap per app. For Windows, macOS and Linux. Free for personal use, Pro for work.
-
-<a href="https://routengine.net/?utm_source=MultiRouteNetwork&utm_medium=readme-screenshot">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/routengine-overview.png">
-    <img src="docs/routengine-overview-light.png" width="100%" alt="RoutEngine with WiFi and Ethernet online and three apps, each routed its own way: Steam over both, Brave over Ethernet with a WiFi backup and a data cap, curl over WiFi">
-  </picture>
-</a>
-
-**[Get RoutEngine](https://routengine.net/?utm_source=MultiRouteNetwork&utm_medium=readme)**
-
-Building a college project? [DormHost](https://dormhost.dev/?utm_source=MultiRouteNetwork&utm_medium=readme), also by the same developer, puts it online: Node.js, Python or Docker with a database, 30 days free.
-
-## Good to know
-
-- Needs admin (Windows), `CAP_NET_ADMIN` (Linux) or `sudo MultiRouteNetwork install` once (macOS).
-- Some sites tie your login to one IP. MultiRouteNetwork may use a different IP for each connection, so such a
-  site can ask you to log in again.
-- If your connections differ in IPv6 support, sites that only have IPv6 are not reachable while the box
-  above is ticked.
-
-## More
-
-- What changed in each version: [CHANGELOG.md](CHANGELOG.md)
-- New versions come out once a week when something changed. Important fixes come out right away.
-- How it works, building from source, tests: [docs/DEVELOPING.md](docs/DEVELOPING.md)
-- Want to help? [CONTRIBUTING.md](CONTRIBUTING.md). Found a security problem? [SECURITY.md](SECURITY.md)
-- License: MIT, see `LICENSE`. Third-party parts: `THIRD-PARTY-NOTICES.md`.
-
-## Support
-
-Report issues in [our repository](https://github.com/aristache-labs/MultiRouteNetwork/issues).
-
+- Repository and issues: [aristache-labs/MultiRouteNetwork](https://github.com/aristache-labs/MultiRouteNetwork).
+- Changes: [CHANGELOG.md](CHANGELOG.md); versions are published only when explicitly tagged/released.
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
+- License: [MIT](LICENSE). Dependencies and driver terms: [third-party notices](THIRD-PARTY-NOTICES.md).
+- Support development: [buymeacoffee.com/aristache](https://buymeacoffee.com/aristache).

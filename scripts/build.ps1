@@ -2,11 +2,12 @@
 #   scripts\build.ps1 -Version 0.1.0
 # Needs Go and Inno Setup 6 (ISCC.exe on PATH, in a default install dir, or in $env:ISCC).
 param(
-    [string]$Version = '0.0.0',
+    [string]$Version = '',
     [string]$RepoUrl = ''
 )
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
+if (-not $Version) { $Version = (Get-Content -LiteralPath 'VERSION' -Raw).Trim() }
 
 function Invoke-Native {
     param([string]$What, [scriptblock]$Cmd)

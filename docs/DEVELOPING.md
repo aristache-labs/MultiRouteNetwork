@@ -165,6 +165,11 @@ scripts\fetch-wintun.ps1 -OutDir .
 ```
 
 Releases are built by GitHub Actions when a `vX.Y.Z` tag is pushed (`.github/workflows/release.yml`).
+`VERSION` records the current source milestone (0.4.5). Both Windows build scripts
+read it when `-Version` is omitted; desktop packaging stamps the engine with
+`-X main.version=...`. The frontend package metadata and the engine source fallback
+must match `VERSION`. The 0.4.0–0.4.5 changelog sections are retrospective milestones,
+not proof of published releases; do not create historical tags merely to backfill them.
 Add the version's section to `CHANGELOG.md` first: it becomes the release notes, and the release fails
 without it (`scripts\release-notes.ps1 -Version X.Y.Z` previews them).
 Layout: `cmd/MultiRouteNetwork` is the command line; `internal/engine` the scheduler, balancer, probes and
