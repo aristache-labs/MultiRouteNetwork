@@ -2,8 +2,9 @@
 [CmdletBinding()]
 param(
     [string[]]$Adapters = @('Ethernet', 'Wi-Fi', 'Ethernet 4'),
+    [string[]]$CounterAdapters = @(),
     [ValidateRange(3, 120)][int]$Seconds = 15,
-    [ValidateRange(1, 24)][int]$Streams = 6,
+    [ValidateRange(1, 24)][int]$Streams = 3,
     [string]$Url = 'https://sbg.proof.ovh.net/files/10Gb.dat',
     [string]$OutputDirectory,
     [string]$StateDirectory,
@@ -73,9 +74,14 @@ function Convert-CurlMeasurement([string]$Metrics, [int]$ExitCode) {
 }
 
 function Get-ComparisonCounters([string[]]$Names) {
+    # Apple's phone Ethernet driver is listed by Get-NetAdapter but can be
+    # absent from Get-NetAdapterStatistics. .NET's IP counters cover it too.
+    $interfaces = [Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces()
     foreach ($name in $Names) {
-        $value = Get-NetAdapterStatistics -Name $name -ErrorAction Stop
-        [pscustomobject]@{ Adapter = $name; Received = [double]$value.ReceivedBytes; Sent = [double]$value.SentBytes }
+        $interface = @($interfaces | Where-Object { $_.Name -eq $name })
+        if ($interface.Count -ne 1) { throw "Cannot identify counters for $name." }
+        $value = $interface[0].GetIPStatistics()
+        [pscustomobject]@{ Adapter = $name; Received = [double]$value.BytesReceived; Sent = [double]$value.BytesSent }
     }
 }
 
@@ -87,12 +93,14 @@ $plan = foreach ($phase in @('direct', 'engine')) {
 }
 if ($PlanOnly) { $plan | Format-Table; return }
 if ($Url -notmatch '^https://') { throw 'Use an HTTPS download URL.' }
-$curlPath = (Get-Command curl.exe -CommandType Application).Source
+$curlPath = (Get-Command curl.exe -CommandType Application | Select-Object -First 1).Source
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot ('../diagnostics/download-comparison-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $stateDirectory = Join-Path $env:LOCALAPPDATA 'MultiRouteNetwork'
 $initial = Read-EngineStatus
+if (-not $CounterAdapters.Count) { $CounterAdapters = $Adapters }
+[pscustomobject]@{ Url = $Url; Adapters = $Adapters; CounterAdapters = $CounterAdapters; Streams = $Streams; Seconds = $Seconds; Started = (Get-Date).ToString('o') } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'test-config.json') -Encoding UTF8
 $initial | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'initial-status.json') -Encoding UTF8
 Write-Host 'Ethernet and Wi-Fi share one router/WAN: do NOT add their internet rates together.'
 Write-Host 'Ethernet 4 uses the phone hotspot. These tests can consume multiple GB, including mobile data.'
@@ -127,7 +135,7 @@ foreach ($case in $plan) {
     $status | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $OutputDirectory "$label-status.json") -Encoding UTF8
     $nic | Select-Object Name, InterfaceDescription, ifIndex, LinkSpeed | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $OutputDirectory "$label-adapter.json") -Encoding UTF8
     $jobs = @(); $stageStart = Get-Date; $releaseAt = [DateTime]::UtcNow.AddSeconds(8)
-    $beforeCounters = @(Get-ComparisonCounters $Adapters)
+    $beforeCounters = @(Get-ComparisonCounters $CounterAdapters)
     try {
         for ($i = 1; $i -le $Streams; $i++) {
             $errorFile = Join-Path $OutputDirectory "$label-$i-stderr.txt"
@@ -162,7 +170,7 @@ foreach ($case in $plan) {
     if (@($results).Count -ne $Streams) { throw "Missing worker results. Inspect $label stream logs." }
     $results | Export-Csv -LiteralPath (Join-Path $OutputDirectory "$label-streams.csv") -NoTypeInformation
     $allResults += $results
-    $afterCounters = @(Get-ComparisonCounters $Adapters)
+    $afterCounters = @(Get-ComparisonCounters $CounterAdapters)
     $counterDelta = foreach ($after in $afterCounters) {
         $before = $beforeCounters | Where-Object { $_.Adapter -eq $after.Adapter }
         [pscustomobject]@{ Adapter = $after.Adapter; ReceivedBytes = $after.Received - $before.Received; SentBytes = $after.Sent - $before.Sent }
@@ -196,6 +204,7 @@ foreach ($case in $plan) {
     $summary | Export-Csv -LiteralPath (Join-Path $OutputDirectory 'summary.csv') -NoTypeInformation
     $summary[-1] | Format-List
     Write-Host 'curl exit 28 is expected at the configured time limit if HTTP succeeded and bytes were received.'
+    if (@($results | Where-Object { $_.HttpCode -eq 429 }).Count) { throw 'Server returned HTTP 429. Results were saved; stop rather than compare a rate-limited endpoint.' }
 }
 $allResults | Export-Csv -LiteralPath (Join-Path $OutputDirectory 'all-streams.csv') -NoTypeInformation
 Write-Host "`nResults: $OutputDirectory"

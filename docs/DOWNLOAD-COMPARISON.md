@@ -7,7 +7,7 @@ WAN, subject to the phone connection. Link Speed is not internet capacity.
 
 Open MultiRoute yourself before running the script. Use a normal PowerShell
 terminal with Windows networking cmdlets. Close other downloads and curl
-processes. The default test runs six parallel curl processes for 15 seconds on
+processes. The default test runs three parallel curl processes for 15 seconds on
 each adapter directly, then repeats through the engine: six stages, potentially
 multiple GB of data, including mobile data. Download output goes to NUL.
 
@@ -27,7 +27,7 @@ Restore your original curl rule yourself after the last stage; the original
 status is saved for reference. On interruption the script removes its own worker
 jobs but does not change the routing state or rule you selected.
 
-Options: `-Seconds 20 -Streams 6`, `-Adapters 'Ethernet','Wi-Fi','Ethernet 4'`,
+Options: `-Seconds 20 -Streams 3`, `-Adapters 'Ethernet','Wi-Fi','Ethernet 4'`,
 `-Url https://.../large-file`, and `-OutputDirectory C:\path\results`.
 Keep the same URL, duration and stream count for direct/engine comparisons.
 
@@ -65,3 +65,7 @@ to the directory used by the running engine, for example
 `-StateDirectory "$env:LOCALAPPDATA\MultiRouteNetwork"`. Automatic detection
 prefers MultiRouteNetwork when its database exists. The named pipe remains
 MultiRoute-<SID>. Direct checks recognize both TUN adapter names.
+
+The OVH endpoint returned HTTP 429 with six parallel streams in a live test.
+The default is three streams; any HTTP 429 saves the partial summary and aborts
+the comparison, because a rate-limited server is not a valid engine baseline.

@@ -5,3 +5,4 @@ result
 *.syso
 .DS_Store
 node_modules/
+diagnostics/

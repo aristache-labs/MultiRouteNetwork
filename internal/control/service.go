@@ -106,26 +106,28 @@ type Service struct {
 
 	openAdapters map[string]map[string]int
 
-	interfaces func() ([]net.Interface, error)
-	mu         sync.Mutex
-	configMu   sync.Mutex
-	sw         Switch
-	sched      *engine.Scheduler
-	db         *store.Store
-	dir        string
-	rules      atomic.Pointer[[]rules.Rule]
-	settings   atomic.Pointer[store.Settings]
-	hold       rules.Hold
-	lastErr    string
-	graphs     map[string]*series
-	apps       map[string]*appMeter
-	lastSnap   []engine.SlotStats
-	lastSkip   []nics.Skip
-	linkPrev   map[string]linkSample
-	uses       map[string]*adapterUse
-	total      series
-	paused     atomic.Bool
-	recording  bool
+	adapterCache *adapterIdentityCache
+	octets       func(int) (uint64, uint64, bool)
+	interfaces   func() ([]net.Interface, error)
+	mu           sync.Mutex
+	configMu     sync.Mutex
+	sw           Switch
+	sched        *engine.Scheduler
+	db           *store.Store
+	dir          string
+	rules        atomic.Pointer[[]rules.Rule]
+	settings     atomic.Pointer[store.Settings]
+	hold         rules.Hold
+	lastErr      string
+	graphs       map[string]*series
+	apps         map[string]*appMeter
+	lastSnap     []engine.SlotStats
+	lastSkip     []nics.Skip
+	linkPrev     map[string]linkSample
+	uses         map[string]*adapterUse
+	total        series
+	paused       atomic.Bool
+	recording    bool
 }
 
 type series struct {
@@ -143,6 +145,8 @@ type linkSample struct {
 	in, out         uint64
 	rateIn, rateOut float64
 	primed          bool
+	index           int
+	hardware        string
 }
 
 type appMeter struct {
@@ -162,7 +166,8 @@ type appMeter struct {
 }
 
 func New(dir string, db *store.Store) *Service {
-	s := &Service{interfaces: net.Interfaces, dir: dir, db: db, graphs: map[string]*series{}, apps: map[string]*appMeter{}, linkPrev: map[string]linkSample{}, uses: map[string]*adapterUse{}}
+	s := &Service{octets: nics.Octets, interfaces: net.Interfaces, dir: dir, db: db, graphs: map[string]*series{}, apps: map[string]*appMeter{}, linkPrev: map[string]linkSample{}, uses: map[string]*adapterUse{}}
+	s.adapterCache = newAdapterIdentityCache(func() ([]net.Interface, error) { return s.interfaces() })
 	var list []rules.Rule
 	st := store.DefaultSettings()
 	if db != nil {
@@ -418,10 +423,25 @@ func (s *Service) tick(snap []engine.SlotStats, skipped []nics.Skip, dt time.Dur
 	// the accounting mutex while calling it: every relayed buffer needs that lock.
 	readings := map[string]linkReading{}
 	if running {
-		ifs, _ := s.interfaces()
-		for _, ifc := range ifs {
-			in, out, ok := nics.Octets(ifc.Index)
-			readings[ifc.Name] = linkReading{in, out, ok}
+		byName := s.adapterCache.get()
+		wanted := map[string]bool{}
+		if physical {
+			for _, sl := range snap {
+				if sl.Present {
+					wanted[sl.Name] = true
+				}
+			}
+		}
+		for _, sk := range skipped {
+			if !hideAdapter(sk.Name, sk.Reason) {
+				wanted[sk.Name] = true
+			}
+		}
+		for name := range wanted {
+			if ifc, found := byName[name]; found {
+				in, out, ok := s.octets(ifc.Index)
+				readings[name] = linkReading{in: in, out: out, ok: ok, index: ifc.Index, hardware: ifc.HardwareAddr.String()}
+			}
 		}
 	}
 	s.mu.Lock()
@@ -587,11 +607,7 @@ func (s *Service) Snapshot(snap []engine.SlotStats, skipped []nics.Skip, running
 	}
 	s.mu.Unlock()
 	// Enrich the copied status after releasing the data-plane lock.
-	ifs, _ := s.interfaces()
-	byName := make(map[string]net.Interface, len(ifs))
-	for _, ifc := range ifs {
-		byName[ifc.Name] = ifc
-	}
+	byName := s.adapterCache.get()
 	for i := range out.Adapters {
 		card := &out.Adapters[i]
 		if card.Routable {
@@ -600,7 +616,9 @@ func (s *Service) Snapshot(snap []engine.SlotStats, skipped []nics.Skip, running
 				card.LinkDownMbps, card.LinkUpMbps = float64(receive)/1e6, float64(transmit)/1e6
 			}
 		} else {
-			card.IP, card.IP6 = adapterIPs(card.Name)
+			if ifc, ok := byName[card.Name]; ok {
+				card.IP, card.IP6 = s.adapterCache.ips(ifc)
+			}
 		}
 	}
 	return out
@@ -740,15 +758,17 @@ func (s *Service) UsageCSV(from time.Time) (string, error) {
 }
 
 type linkReading struct {
-	in, out uint64
-	ok      bool
+	index    int
+	in, out  uint64
+	ok       bool
+	hardware string
 }
 
 func (s *Service) sampleLink(name string, reading linkReading) (float64, float64) {
 	in, out, ok := reading.in, reading.out, reading.ok
 	prev := s.linkPrev[name]
-	next := linkSample{in: in, out: out, rateIn: prev.rateIn, rateOut: prev.rateOut, primed: ok}
-	if ok && prev.primed && in >= prev.in && out >= prev.out {
+	next := linkSample{in: in, out: out, primed: ok, index: reading.index, hardware: reading.hardware}
+	if ok && prev.primed && prev.index == reading.index && prev.hardware == reading.hardware && in >= prev.in && out >= prev.out {
 		sec := s.sampleSeconds
 		if sec <= 0 {
 			sec = 1
@@ -780,11 +800,7 @@ func hideAdapter(name, reason string) bool {
 	return false
 }
 
-func adapterIPs(name string) (string, string) {
-	ifc, err := net.InterfaceByName(name)
-	if err != nil {
-		return "", ""
-	}
+func interfaceIPs(ifc net.Interface) (string, string) {
 	addrs, err := ifc.Addrs()
 	if err != nil {
 		return "", ""

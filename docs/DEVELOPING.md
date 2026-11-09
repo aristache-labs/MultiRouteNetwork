@@ -88,6 +88,16 @@ multiple adapters at once; this does not split a single TCP connection across li
 
 ### Curl routing diagnostics
 
+The controller shares a three-second cache of adapter names/indices between
+telemetry and status requests. Visible VPN addresses use the same metadata
+refresh window. Byte counters still sample at 250 ms and graphs retain 240
+samples (60 seconds); negotiated Link Speed is read fresh for each status.
+Enumeration is outside the transfer-accounting mutex. Enumeration failures
+temporarily clear the lookup and retry after one second. Counter baselines reset
+on an index/MAC change, counter reset or failed read, preventing stale rates and
+false spikes when a device reconnects. This cache does not change scheduler
+discovery, health probes, weights or selection policies.
+
 The desktop engine writes identified `curl.exe` flow diagnostics to
 `curl-routing.jsonl` in the per-user state directory (normally
 `%LOCALAPPDATA%\MultiRouteNetwork`). The current file and one `.1` backup are each
