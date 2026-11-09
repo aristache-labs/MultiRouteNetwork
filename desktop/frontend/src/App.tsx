@@ -110,16 +110,14 @@ function Icon({ name }: any) {
 function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none">
+      <svg viewBox="0 0 64 64" fill="none">
         <path
-          d="M10 34V14l14 20 14-20v20"
+          d="M11 53V13L32 38L53 13V53"
           stroke="white"
-          strokeWidth="4"
+          strokeWidth="15"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="10" cy="14" r="4" fill="#ffce00" />
-        <circle cx="38" cy="34" r="4" fill="white" />
       </svg>
     </span>
   );

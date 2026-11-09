@@ -17,7 +17,7 @@ func TestAppIconIsTileWithMark(t *testing.T) {
 		t.Fatalf("tile centre should be opaque, got alpha %d", centre.A)
 	}
 	// The right stem is the bright tone; sample inside it (x=53, y=45 on the grid, 0.76 scale).
-	rx, ry := int((32+(53-32)*0.76)*4), int((32+(45-32)*0.76)*4)
+	rx, ry := 192, 167 // (32+(53-32)*0.76)*4, (32+(45-32)*0.76)*4
 	stem := img.NRGBAAt(rx, ry)
 	if stem.R < 140 || stem.G < 230 || stem.B < 230 {
 		t.Fatalf("right stem should be the bright teal, got %+v", stem)

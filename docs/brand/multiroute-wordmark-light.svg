@@ -9,8 +9,8 @@
     <circle cx="11" cy="13" r="3.6"/>
     <circle cx="53" cy="13" r="3.6"/>
     <circle cx="32" cy="38" r="3.6"/>
-    <path transform="translate(20 23.5) rotate(50)" d="M-3.2 -3.6L0.8 0L-3.2 3.6"/>
-    <path transform="translate(44 23.5) rotate(130)" d="M-3.2 -3.6L0.8 0L-3.2 3.6"/>
+    <path transform="translate(20 23.5) rotate(50)" d="M-4 -2.4L1 0L-4 2.4"/>
+    <path transform="translate(44 23.5) rotate(130)" d="M-4 -2.4L1 0L-4 2.4"/>
   </g>
   <text x="76" y="44" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif" font-size="34" font-weight="600" letter-spacing="-0.5" fill="#252525">Multi<tspan fill="#00879B">Route</tspan></text>
 </svg>

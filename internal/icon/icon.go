@@ -123,9 +123,9 @@ func cutouts(x, y float64) float64 {
 		rot := func(lx, ly float64) (float64, float64) {
 			return ch.tx + lx*math.Cos(a) - ly*math.Sin(a), ch.ty + lx*math.Sin(a) + ly*math.Cos(a)
 		}
-		ax, ay := rot(-3.2, -3.6)
-		bx, by := rot(0.8, 0)
-		cx, cy := rot(-3.2, 3.6)
+		ax, ay := rot(-4, -2.4)
+		bx, by := rot(1, 0)
+		cx, cy := rot(-4, 2.4)
 		d = math.Min(d, capsule(x, y, ax, ay, bx, by, w))
 		d = math.Min(d, capsule(x, y, bx, by, cx, cy, w))
 	}
