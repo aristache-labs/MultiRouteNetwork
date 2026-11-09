@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
+  <title>MultiRoute app icon, cyan</title>
+  <rect width="64" height="64" rx="14" fill="#1EBED3"/>
+  <g transform="translate(32 32) scale(.74) translate(-32 -32)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7.5">
+    <path stroke="#0A5A63" d="M14 50V14l18 18"/>
+    <path stroke="#082E33" d="M50 50V14L32 32"/>
+    <path stroke="#FFFFFF" d="M32 32v18m-6.5-6.5L32 50l6.5-6.5"/>
+  </g>
+</svg>

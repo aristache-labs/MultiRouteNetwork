@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32">
+  <title>MultiRoute</title>
+  <rect width="64" height="64" rx="12" fill="#111111"/>
+  <g transform="translate(32 32) scale(.86) translate(-32 -32)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
+    <path stroke="#0E8E9E" d="M14 50V14l18 18"/>
+    <path stroke="#1EBED3" d="M50 50V14L32 32"/>
+    <path stroke="#9CF0F8" d="M32 32v18m-6.5-6.5L32 50l6.5-6.5"/>
+  </g>
+</svg>

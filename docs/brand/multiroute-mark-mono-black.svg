@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
+  <title>MultiRoute mark</title>
+  <g fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
+    <path d="M14 50V14l18 18M50 50V14L32 32M32 32v18m-6.5-6.5L32 50l6.5-6.5"/>
+  </g>
+</svg>
