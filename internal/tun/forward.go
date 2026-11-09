@@ -1,0 +1,125 @@
+package tun
+
+import (
+	"sync/atomic"
+	"time"
+
+	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
+	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
+	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
+	"gvisor.dev/gvisor/pkg/waiter"
+
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+)
+
+// installForwarders replaces tun2socks' TCP/UDP handlers with equivalents that can refuse IPv6
+// flows. The refusal has to happen at the SYN (RST before the handshake completes): once the
+// userland stack has accepted the connection the app believes it is connected, and a browser
+// that "won" the race on IPv6 will not fall back to IPv4 after a later reset.
+func installForwarders(s *stack.Stack, allowV6 func() bool, sessions *atomic.Pointer[flowSession]) {
+	isV6 := func(id stack.TransportEndpointID) bool { return id.LocalAddress.Len() == header.IPv6AddressSize }
+
+	tf := tcp.NewForwarder(s, 0, 2<<10, func(r *tcp.ForwarderRequest) {
+		session := sessions.Load()
+		if session == nil {
+			r.Complete(true)
+			return
+		}
+		id := r.ID()
+		if isV6(id) && !allowV6() {
+			r.Complete(true) // RST: connect fails instantly, Happy Eyeballs moves on to IPv4
+			return
+		}
+		var wq waiter.Queue
+		ep, err := r.CreateEndpoint(&wq)
+		if err != nil {
+			r.Complete(true) // prevent a half-open connection leak
+			return
+		}
+		defer r.Complete(false)
+		setTCPOptions(s, ep)
+		c := gonet.NewTCPConn(&wq, ep)
+		release, ok := session.track(c)
+		if !ok {
+			return
+		}
+		tunnel.T().HandleTCP(&tcpConn{TCPConn: c, id: id, release: release})
+	})
+	s.SetTransportProtocolHandler(tcp.ProtocolNumber, tf.HandlePacket)
+
+	uf := udp.NewForwarder(s, func(r *udp.ForwarderRequest) bool {
+		session := sessions.Load()
+		if session == nil {
+			return false
+		}
+		id := r.ID()
+		if isV6(id) && !allowV6() {
+			return false // unhandled: the stack answers ICMP port unreachable, so QUIC falls back fast
+		}
+		var wq waiter.Queue
+		ep, err := r.CreateEndpoint(&wq)
+		if err != nil {
+			return false
+		}
+		c := gonet.NewUDPConn(&wq, ep)
+		release, ok := session.track(c)
+		if !ok {
+			return false
+		}
+		tunnel.T().HandleUDP(&udpConn{UDPConn: c, id: id, release: release})
+		return true
+	})
+	s.SetTransportProtocolHandler(udp.ProtocolNumber, uf.HandlePacket)
+}
+
+type tcpConn struct {
+	*gonet.TCPConn
+	id      stack.TransportEndpointID
+	release func()
+}
+
+func (c *tcpConn) Close() error {
+	if c.release != nil {
+		c.release()
+	}
+	return c.TCPConn.Close()
+}
+
+func (c *tcpConn) ID() stack.TransportEndpointID { return c.id }
+
+type udpConn struct {
+	*gonet.UDPConn
+	id      stack.TransportEndpointID
+	release func()
+}
+
+func (c *udpConn) Close() error {
+	if c.release != nil {
+		c.release()
+	}
+	return c.UDPConn.Close()
+}
+
+func (c *udpConn) ID() stack.TransportEndpointID { return c.id }
+
+// setTCPOptions mirrors tun2socks' defaults: keepalive plus the stack's default buffer sizes.
+func setTCPOptions(s *stack.Stack, ep tcpip.Endpoint) {
+	ep.SocketOptions().SetKeepAlive(true)
+	idle := tcpip.KeepaliveIdleOption(60 * time.Second)
+	ep.SetSockOpt(&idle)
+	interval := tcpip.KeepaliveIntervalOption(30 * time.Second)
+	ep.SetSockOpt(&interval)
+	ep.SetSockOptInt(tcpip.KeepaliveCountOption, 9)
+
+	var ss tcpip.TCPSendBufferSizeRangeOption
+	if err := s.TransportProtocolOption(header.TCPProtocolNumber, &ss); err == nil {
+		ep.SocketOptions().SetSendBufferSize(int64(ss.Default), false)
+	}
+	var rs tcpip.TCPReceiveBufferSizeRangeOption
+	if err := s.TransportProtocolOption(header.TCPProtocolNumber, &rs); err == nil {
+		ep.SocketOptions().SetReceiveBufferSize(int64(rs.Default), false)
+	}
+}
