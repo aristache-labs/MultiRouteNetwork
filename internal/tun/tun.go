@@ -228,6 +228,12 @@ func (t *Tun) open() error {
 	if err != nil {
 		return fmt.Errorf("open TUN (%s): %w", openHint, err)
 	}
+	optimized, err := optimizePacketDevice(dev)
+	if err != nil {
+		dev.Close()
+		return fmt.Errorf("prepare TUN packet buffers: %w", err)
+	}
+	dev = optimized
 	stk, err := core.CreateStack(&core.Config{
 		LinkEndpoint:     dev,
 		TransportHandler: tunnel.T(),

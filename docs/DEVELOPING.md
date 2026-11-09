@@ -178,3 +178,20 @@ Nix package and NixOS module are in `nix/`; after changing Go dependencies, upda
 
 Don't benchmark against speed.cloudflare.com repeatedly: it rate-limits the IP (HTTP 429) after a few
 large downloads and the numbers become meaningless.
+
+Windows packet buffer allocation benchmarks (no live TUN or downloads):
+
+```
+go test ./internal/tun -run '^$' -bench 'BenchmarkPacket(Inbound|Outbound)' -benchmem
+```
+
+The Windows IO endpoint reuses separate inbound and outbound scratch buffers.
+Inbound packets still copy into gVisor-owned, reference-counted storage, so a
+retained packet cannot alias the next native read. Outbound packets copy their
+borrowed views into the writer's scratch buffer instead of calling
+`ToBuffer().Flatten()`. The buffer grows when needed and remains owned until
+the synchronous native write returns. Queue size, MTU, packet framing and
+scheduler policy are unchanged; other platforms retain the upstream endpoint.
+Tests cover retained packets, IPv4/IPv6, segmented buffers, reserved headers,
+buffer growth and shutdown with blocked IO and queued packets. Microbenchmarks
+measure allocation overhead, not end-to-end network throughput.
