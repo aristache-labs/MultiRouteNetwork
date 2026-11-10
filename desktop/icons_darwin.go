@@ -4,6 +4,7 @@ package main
 
 /*
 #cgo LDFLAGS: -framework AppKit -framework Foundation
+#include <stdlib.h>
 int mr_icon_png(const char *path, unsigned char **out, int *outlen);
 */
 import "C"

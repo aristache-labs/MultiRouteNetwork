@@ -18,6 +18,7 @@ import (
 
 /*
 #cgo LDFLAGS: -framework ServiceManagement -framework Foundation
+#include <stdlib.h>
 int mr_register_daemon(const char *plist, char *errbuf, int errlen);
 */
 import "C"
