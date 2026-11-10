@@ -1,7 +1,7 @@
 # Changelog
 
 Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
-Current source version: **0.4.7**. See [README.md](README.md) for current behavior and limitations.
+Current source version: **0.4.8**. See [README.md](README.md) for current behavior and limitations.
 
 Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
 work that accumulated after 0.3.7. Their dates record this documentation milestone,
@@ -11,6 +11,17 @@ references there to package hosts, upstream products or release availability are
 historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
+
+## [0.4.8] - 2026-11-10
+
+### Fixed
+- Cleared stale data-cap blocks and warnings when removing caps or deleting rules, without restarting the engine.
+- Recalculated quota state after cap edits and prevented existing flow callbacks from restoring obsolete caps.
+- Preserved persisted and pending usage when caps are removed, raised or reapplied.
+- Preserved exact-path rule priority when recalculating data-cap state.
+
+### Added
+- Added regression tests for cap removal, rule deletion, raised limits, existing flow callbacks and preserved usage.
 
 ## [0.4.7] - 2026-11-10
 

@@ -255,8 +255,7 @@ func (s *Service) Prepare(network string, src, dst string, srcPort, dstPort int)
 	rule, _ := matchRule(s.ruleList(), h)
 	h.DNS = dnsHost(rule)
 	if s.capped(rule, h.Name) {
-		h.Blocked = true
-		s.markCapped(h.Name, h.Path)
+		h.Blocked = s.markCapped(h.Name, h.Path)
 	}
 	name, path := h.Name, h.Path
 	h.OnOpen = func(adapter string) func() { return s.trackAdapter(name, adapter) }
@@ -308,24 +307,10 @@ func (s *Service) account(exe, path, adapter string, rule rules.Rule, down bool,
 	} else {
 		m.up += int64(n)
 	}
-	if rule.CapGB > 0 {
-		key := rules.CapKey(exe, rule.CapPeriod, time.Now())
-		if !m.periodLoaded || m.periodKey != key {
-			m.periodKey = key
-			m.period = 0
-			m.periodLoaded = true
-			m.capped = false
-			if s.db != nil {
-				if already, err := s.db.PeriodBytes(exe, periodStart(rule.CapPeriod, time.Now())); err == nil {
-					m.period = already
-				}
-			}
-		}
-		m.period += int64(n)
-		limit := rule.CapGB * 1e9
-		m.warn = float64(m.period) >= limit*warnAt
-		m.capped = float64(m.period) >= limit
-	}
+	// Existing flows retain their routing rule, but quota edits must take effect
+	// immediately rather than reapplying a cap captured when the flow opened.
+	capRule, _ := matchRule(s.ruleList(), engine.FlowHint{Name: exe, Path: path, Known: true})
+	s.refreshCapLocked(exe, m, capRule, time.Now(), int64(n))
 	wait := s.paceLocked(m, rule, adapter, down, n)
 	s.mu.Unlock()
 	if wait > 0 {
@@ -396,15 +381,47 @@ func (s *Service) capped(rule rules.Rule, exe string) bool {
 	return float64(n) >= rule.CapGB*1e9
 }
 
-func (s *Service) markCapped(exe, path string) {
+// refreshCapLocked reconciles quota flags without resetting usage counters.
+// added is already included in the meter's totals, but not in a loaded period.
+func (s *Service) refreshCapLocked(exe string, m *appMeter, rule rules.Rule, now time.Time, added int64) {
+	if rule.CapGB <= 0 {
+		m.capped, m.warn = false, false
+		m.periodLoaded = false
+		return
+	}
+	key := rules.CapKey(exe, rule.CapPeriod, now)
+	if !m.periodLoaded || m.periodKey != key {
+		var saved int64
+		if s.db != nil {
+			var err error
+			saved, err = s.db.PeriodBytes(exe, periodStart(rule.CapPeriod, now))
+			if err != nil {
+				return
+			}
+		}
+		// Include unflushed bytes exactly once when loading/reloading the period.
+		m.period = saved + m.down - m.flushedDown + m.up - m.flushedUp
+		m.periodKey, m.periodLoaded = key, true
+	} else {
+		m.period += added
+	}
+	limit := rule.CapGB * 1e9
+	m.warn = float64(m.period) >= limit*warnAt
+	m.capped = float64(m.period) >= limit
+}
+
+func (s *Service) markCapped(exe, path string) bool {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	m := s.apps[exe]
 	if m == nil {
-		m = &appMeter{path: path, graph: make([]float64, graphLen), graphUp: make([]float64, graphLen)}
+		m = &appMeter{path: path, graph: make([]float64, graphLen), graphUp: make([]float64, graphLen), buckets: map[string]*bucket{}}
 		s.apps[exe] = m
 	}
-	m.capped = true
-	s.mu.Unlock()
+	// Recheck after acquiring the lock: the cap may have changed since Prepare.
+	rule, _ := matchRule(s.ruleList(), engine.FlowHint{Name: exe, Path: path, Known: true})
+	s.refreshCapLocked(exe, m, rule, time.Now(), 0)
+	return m.capped
 }
 
 // Tick records one second of adapter throughput. Call it from the engine loop.
@@ -632,7 +649,14 @@ func (s *Service) PutRules(list []rules.Rule) error {
 			return err
 		}
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.rules.Store(&list)
+	now := time.Now()
+	for exe, m := range s.apps {
+		rule, _ := matchRule(list, engine.FlowHint{Name: exe, Path: m.path, Known: true})
+		s.refreshCapLocked(exe, m, rule, now, 0)
+	}
 	return nil
 }
 

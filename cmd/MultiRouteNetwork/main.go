@@ -223,7 +223,7 @@ func formatNICs(snap []engine.SlotStats) string {
 
 // Set at build time: -X main.version=... and, for the windowless tray build, -X main.defaultCmd=tray.
 var (
-	version    = "0.4.7"
+	version    = "0.4.8"
 	defaultCmd = ""
 )
 

@@ -17,7 +17,7 @@
   <a href="https://buymeacoffee.com/aristache">Buy me a coffee</a>
 </p>
 
-**Current source version: 0.4.7.** The Windows desktop application is **MultiRoute**;
+**Current source version: 0.4.8.** The Windows desktop application is **MultiRoute**;
 its engine, Go module and repository are **MultiRouteNetwork**. The project builds
 on the MIT-licensed net-merge engine. Copyright and third-party notices remain applicable.
 
@@ -155,6 +155,9 @@ Adapter cards omit negotiated Link Speed; they show current transfer rates and t
 Application-wide and applicable adapter limits combine. Empty fields mean unlimited.
 Small UDP traffic counts toward application limits. Data caps count download plus
 upload; reaching the cap stops that application's routed flows for the period.
+Removing the cap clears its block and warning immediately; raising it rechecks
+consumed usage without restarting the engine or clearing history. Interrupted
+connections must reconnect.
 
 ## Usage, state and limitations
 
@@ -211,7 +214,7 @@ npm ci
 npm run build
 Pop-Location
 
-go build -ldflags "-H=windowsgui -X main.version=0.4.7" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=0.4.8" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
 go build -o dist/multiroute/MultiRoute.exe ./desktop
 ```
 
