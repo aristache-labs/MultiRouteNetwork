@@ -104,9 +104,14 @@ func restorePeer(t *testing.T, fn func(net.Conn) (int, string, error)) {
 }
 
 // macOS rejects a unix socket path longer than 104 bytes. t.TempDir includes the test name.
+// /tmp is a symlink there, and the service refuses a symlinked parent.
 func shortServiceDir(t *testing.T) string {
 	t.Helper()
-	dir, err := os.MkdirTemp("/tmp", "mr")
+	parent := "/tmp"
+	if fi, err := os.Lstat(parent); err == nil && fi.Mode()&os.ModeSymlink != 0 {
+		parent = "/private/tmp"
+	}
+	dir, err := os.MkdirTemp(parent, "mr")
 	if err != nil {
 		t.Fatal(err)
 	}

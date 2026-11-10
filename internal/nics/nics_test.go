@@ -6,7 +6,7 @@ import (
 )
 
 func TestRenamedTunnelStaysVirtual(t *testing.T) {
-	for _, name := range []string{"MultiRouteNetwork", "multiroutenetwork", "MULTIROUTENETWORK", "net-merge"} {
+	for _, name := range []string{"MultiRoute", "MultiRouteNetwork", "multiroutenetwork", "MULTIROUTENETWORK", "net-merge"} {
 		if !virtualName.MatchString(name) {
 			t.Fatalf("own tunnel %q must be excluded from routing", name)
 		}

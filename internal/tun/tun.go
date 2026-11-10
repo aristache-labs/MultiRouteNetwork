@@ -364,7 +364,7 @@ func CleanupStale() {
 	if staleHook != nil {
 		staleHook()
 	}
-	if ifc, err := net.InterfaceByName(tunName); err == nil {
+	if ifc, err := net.InterfaceByName(openName); err == nil {
 		delRoutes(ifc.Index)
 	}
 }

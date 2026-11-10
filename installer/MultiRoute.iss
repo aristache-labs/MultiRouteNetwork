@@ -22,7 +22,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 LicenseFile=LICENSE
-SetupIconFile=..\dist\multiroute\MultiRoute.ico
+SetupIconFile=..\multiroute\MultiRoute.ico
 SourceDir=..\dist\MultiRoute-{#Version}-windows
 ; OutputDir is relative to SourceDir, so this is the repository dist folder.
 OutputDir=..\..\dist

@@ -13,6 +13,11 @@ import (
 
 const openHint = "needs root or CAP_NET_ADMIN, and /dev/net/tun"
 
+func init() {
+	// Linux interface names stop at 15 characters. MultiRouteNetwork is 18.
+	openName = "MultiRoute"
+}
+
 // configure gives the new adapter its addresses and routes, and returns its index. tun2socks has
 // already set the MTU. Everything goes through netlink rather than `ip`, so it also works when the
 // privilege is a file capability, which child processes don't inherit.

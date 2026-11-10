@@ -13,8 +13,14 @@ if [ -z "${SUDO_USER:-}" ] || [ "$SUDO_USER" = root ]; then
   exit 1
 fi
 uid=$(id -u "$SUDO_USER")
-# A short directory: macOS refuses a unix socket path longer than 104 bytes.
-dir=$(mktemp -d /tmp/mr-it.XXXXXX)
+# A short real directory. macOS /tmp is a symlink, which the service rejects,
+# and its socket path must stay under 104 bytes.
+parent=/tmp
+if [ "$(uname -s)" = Darwin ]; then
+  parent=/private/tmp
+fi
+dir=$(mktemp -d "$parent/mr-it.XXXXXX")
+chmod 755 "$dir"
 pid=""
 ok=0
 cleanup() {
@@ -47,7 +53,7 @@ test "$ready" = 1
 sudo -u "$SUDO_USER" -- "$bin" service-call -state-dir "$dir" -op start
 os=$(uname -s)
 if [ "$os" = "Linux" ]; then
-  ip link show MultiRouteNetwork >/dev/null
+  ip link show MultiRoute >/dev/null
 elif [ "$os" = "Darwin" ]; then
   netstat -rn -f inet | grep -q '0/1'
 else
@@ -66,7 +72,7 @@ peer.sendto(b"ok", udp.getsockname()); udp.recvfrom(16); peer.close(); udp.close
 PY
 sudo -u "$SUDO_USER" -- "$bin" service-call -state-dir "$dir" -op stop
 if [ "$os" = "Linux" ]; then
-  if ip link show MultiRouteNetwork >/dev/null 2>&1; then
+  if ip link show MultiRoute >/dev/null 2>&1; then
     echo "capture device remained after stop" >&2
     exit 1
   fi
