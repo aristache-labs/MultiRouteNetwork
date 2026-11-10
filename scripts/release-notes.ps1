@@ -17,6 +17,10 @@ $install = "**MultiRouteNetwork ${Version}:** see the [README](https://github.co
     "The Windows desktop needs WebView2. Linux and macOS install a privileged service that does not route until Start."
 # UTF-8 without a BOM (Windows PowerShell's -Encoding utf8 adds one, which GitHub would show)
 $path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
+$dir = Split-Path -Parent $path
+if ($dir -and -not (Test-Path -LiteralPath $dir)) {
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+}
 $footer = "---`n[Report an issue](https://github.com/aristache-labs/MultiRouteNetwork/issues) · " +
     "[Support development](https://buymeacoffee.com/aristache)"
 [IO.File]::WriteAllText($path, $install + "`n`n" + $m.Groups[1].Value.Trim() + "`n`n" + $footer + "`n", (New-Object Text.UTF8Encoding $false))

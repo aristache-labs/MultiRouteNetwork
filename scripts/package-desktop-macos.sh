@@ -17,8 +17,8 @@ fi
 stage="$out/MultiRoute.app"
 rm -rf "$stage"
 mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources" "$stage/Contents/Library/LaunchDaemons"
-CGO_ENABLED=1 GOARCH="$arch" go build -trimpath -ldflags "-X main.version=$version" -o "$stage/Contents/MacOS/MultiRouteNetwork" ./cmd/MultiRouteNetwork
-CGO_ENABLED=1 GOARCH="$arch" go build -trimpath -ldflags "-X main.version=$version" -o "$stage/Contents/MacOS/MultiRoute" ./desktop
+CGO_ENABLED=1 GOARCH="$arch" go build -trimpath -buildvcs=true -ldflags "-X main.version=$version" -o "$stage/Contents/MacOS/MultiRouteNetwork" ./cmd/MultiRouteNetwork
+CGO_ENABLED=1 GOARCH="$arch" go build -trimpath -buildvcs=true -ldflags "-X main.version=$version" -o "$stage/Contents/MacOS/MultiRoute" ./desktop
 sed "s/VERSION/$version/g" packaging/macos/Info.plist > "$stage/Contents/Info.plist"
 cp packaging/macos/dev.aristache.multiroute.daemon.plist "$stage/Contents/Library/LaunchDaemons/dev.aristache.multiroute.daemon.plist"
 echo "$stage"

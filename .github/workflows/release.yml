@@ -132,9 +132,11 @@ jobs:
           set -eu
           version='${{ needs.validate.outputs.version }}'
           deb="dist/MultiRoute-$version-linux-amd64.deb"
-          dpkg-deb --info "$deb" | grep -q 'Architecture: amd64'
-          dpkg-deb --info "$deb" | grep -q 'libgtk-4-1'
-          dpkg-deb --info "$deb" | grep -q 'libwebkitgtk-6.0-4'
+          info=$(dpkg-deb --info "$deb")
+          printf '%s\n' "$info"
+          printf '%s\n' "$info" | grep -q 'Architecture: amd64'
+          printf '%s\n' "$info" | grep -q 'libgtk-4-1'
+          printf '%s\n' "$info" | grep -q 'libwebkitgtk-6.0-4'
           rm -rf /tmp/multiroute-deb && mkdir /tmp/multiroute-deb
           dpkg-deb -x "$deb" /tmp/multiroute-deb
           test -f /tmp/multiroute-deb/usr/bin/MultiRoute
@@ -142,8 +144,9 @@ jobs:
           test -f /tmp/multiroute-deb/usr/lib/systemd/system/multiroute.service
           for bin in MultiRoute MultiRouteNetwork; do
             meta=$(go version -m "/tmp/multiroute-deb/usr/bin/$bin")
-            printf '%s' "$meta" | grep -q "vcs.revision=$EXPECTED_COMMIT"
-            printf '%s' "$meta" | grep -q 'vcs.modified=false'
+            printf '%s\n' "$meta"
+            printf '%s\n' "$meta" | grep -q "vcs.revision=$EXPECTED_COMMIT"
+            printf '%s\n' "$meta" | grep -q 'vcs.modified=false'
             "/tmp/multiroute-deb/usr/bin/$bin" version | grep -q "$version"
           done
       - uses: actions/upload-artifact@v4
@@ -157,7 +160,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [arm64, amd64]
-    runs-on: macos-14
+    runs-on: macos-latest
     environment: desktop-signing
     steps:
       - uses: actions/checkout@v4

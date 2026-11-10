@@ -10,6 +10,10 @@ license: MIT
 description: |
   Route applications across network adapters.
   Experimental Ubuntu desktop build. Routing stays off until Start.
+depends:
+  - libgtk-4-1
+  - libwebkitgtk-6.0-4
+  - libayatana-appindicator3-1
 contents:
   - src: ./MultiRoute
     dst: /usr/bin/MultiRoute

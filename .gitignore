@@ -1,6 +1,7 @@
 *.exe
 wintun.dll
 dist/
+build/
 result
 *.syso
 .DS_Store
