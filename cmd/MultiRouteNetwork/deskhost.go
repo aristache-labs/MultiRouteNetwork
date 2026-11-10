@@ -19,7 +19,7 @@ func hostControl(dir string, sched *engine.Scheduler, bal *engine.Balancer, sw c
 	svc.EnableCurlDiagnostics()
 	svc.Attach(sched, sw)
 	go func() {
-		ticker := time.NewTicker(250 * time.Millisecond)
+		ticker := time.NewTicker(control.SampleInterval)
 		defer ticker.Stop()
 		last := time.Now()
 		var scanned time.Time

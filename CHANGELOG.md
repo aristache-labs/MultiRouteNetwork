@@ -1,7 +1,7 @@
 # Changelog
 
 Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
-Current source version: **0.4.5**. See [README.md](README.md) for current behavior and limitations.
+Current source version: **0.4.6**. See [README.md](README.md) for current behavior and limitations.
 
 Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
 work that accumulated after 0.3.7. Their dates record this documentation milestone,
@@ -12,12 +12,39 @@ historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
 
-### Planned
-- Improve adapter-card and application-row layout when resizing the window or opening Settings; this work remains pending.
+## [0.4.6] - 2026-11-10
+
+### Changed
+- Sampled traffic and refreshed displayed rates every 70 ms, independently of the unchanged balancing cycle.
+- Retained approximately 60 seconds of graph history using 858 samples and one-second visual smoothing.
+- Applied separate application graph scaling to reveal small activity peaks; preserved header and adapter scale floors.
+- Lifted adapter graph detail with square-root vertical scaling without enlarging cards.
+- Stabilized application ordering using averaged combined traffic, one-second ranking and a minimum lead before reordering.
+- Applied translucent teal download and yellow upload accents to traffic graphs, values and bars.
+- Highlighted monthly application usage with the download accent.
+- Increased application history width and strengthened graph lines.
+
+### Fixed
+- Prevented header graph movement when changing rate labels altered their digit count or width.
+- Positioned the header graph beside its traffic values.
+- Prevented startup curves from clipping above the plot when traffic begins after an empty history.
+- Preserved graph scroll continuity across telemetry polls and prevented extrapolation beyond available samples.
+- Kept low background traffic near the baseline in header and adapter graphs.
+- Reflowed adapter cards, badges, rates and totals when resizing or opening Settings.
+- Added compact application rows and preserved scrolling in narrow windows and side panels.
+- Wrapped long application titles and corrected the application/process count separator.
+- Extracted higher-resolution executable icons and preserved native transparency for clearer high-DPI display.
+
+### Removed
+- Removed negotiated Link Speed labels from adapter cards.
+
+### Added
+- Added offline browser checks for responsive layouts, graph startup, scrolling, scaling and header position stability.
+- Added regression coverage for graph smoothing, stable application ordering and 70 ms traffic accounting.
 
 ## [0.4.5] - 2026-11-10
 
-Retrospective milestone: Windows packet-buffer efficiency and repeated performance validation. Current source version; not tagged or published.
+Retrospective milestone: Windows packet-buffer efficiency and repeated performance validation. Not tagged or published.
 
 ### Changed
 - Reused Windows TUN read buffers while retaining independent, reference-counted storage for packets held by the network stack.

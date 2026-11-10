@@ -22,8 +22,10 @@ import (
 )
 
 const (
-	graphLen = 240
-	warnAt   = 0.8
+	// Telemetry cadence is independent of the scheduler's one-second tick.
+	SampleInterval = 70 * time.Millisecond
+	graphLen       = int((time.Minute + SampleInterval - 1) / SampleInterval)
+	warnAt         = 0.8
 )
 
 // Switch is the TUN the window and the tray both turn on and off.

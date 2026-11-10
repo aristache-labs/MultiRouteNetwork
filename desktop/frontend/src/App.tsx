@@ -3,6 +3,7 @@ import { Spark } from "./Spark";
 import type { AppRow, Card, Rule, Settings, Status, UsageRow } from "./types";
 import * as React from "react";
 import { api } from "./api";
+import { TrafficOrder } from "./traffic-order";
 import { speedScale } from "./speed-scale";
 import { CloseDialog, CloseBehaviorSettings } from "./CloseDialog";
 const emptyRule: () => Rule = () => ({
@@ -130,7 +131,7 @@ function AppIcon({ exe, path }: any) {
       <span className="app-icon" aria-hidden="true">
         {path && !j ? (
           <img
-            src={`/api/icon?path=${encodeURIComponent(path)}`}
+            src={`/api/icon?v=2&path=${encodeURIComponent(path)}`}
             alt=""
             onError={() => r(!0)}
           />
@@ -230,7 +231,7 @@ export function App() {
     starting: any = startingRequest || !!(status != null && status.starting),
     settings: any = (status == null ? void 0 : status.settings) ?? defaults,
     rules: any = (status == null ? void 0 : status.rules) ?? [],
-    apps: any = (status == null ? void 0 : status.apps) ?? [],
+    apps: AppRow[] = status?.apps ?? [],
     adapters: any = [
       ...((status == null ? void 0 : status.adapters) ?? []),
     ].sort(
@@ -242,11 +243,12 @@ export function App() {
       var z: any;
       return ((z = findRule(N, rules)) == null ? void 0 : z.id) === draft.id;
     });
+  const appOrder = React.useRef(new TrafficOrder());
   async function refresh() {
     var N: any;
     try {
       const z: any = await api.status();
-      (setStatus(z.status),
+      (setStatus({...z.status, apps: appOrder.current.sort(z.status.apps ?? [], performance.now())}),
         setError(z.status.error ?? ""),
         (document.documentElement.dataset.theme =
           ((N = z.status.settings) == null ? void 0 : N.theme) === "light"
@@ -258,7 +260,7 @@ export function App() {
   }
   (React.useEffect(() => {
     refresh();
-    const N: any = window.setInterval(() => void refresh(), 250);
+    const N: any = window.setInterval(() => void refresh(), 70);
     return () => window.clearInterval(N);
   }, []),
     React.useEffect(() => {
@@ -488,7 +490,7 @@ export function App() {
                     <h2 id="applications-title">{"Applications"}</h2>
                     <span className="muted">
                       {apps.length} {apps.length === 1 ? "app" : "apps"}
-                      {" �"}{" "}
+                      {" · "}
                       {
                         apps.filter((N: any) => N.runningKnown && N.running)
                           .length
@@ -535,21 +537,24 @@ export function App() {
                           <div className="app-cell" role="cell">
                             <AppIcon exe={N.exe} path={N.path} />
                             <div className="app-copy">
-                              <span
-                                className={`app-process-state ${N.running ? "is-running" : ""}`}
-                              >
-                                {N.runningKnown
-                                  ? N.running
-                                    ? "running"
-                                    : "not running"
-                                  : "status unavailable"}
-                              </span>
-                              <button
-                                className="app-name"
-                                onClick={() => edit(N)}
-                              >
-                                {N.exe}
-                              </button>
+                              <div className="app-name-line">
+                                <button
+                                  className="app-name"
+                                  onClick={() => edit(N)}
+                                  title={N.exe}
+                                >
+                                  {N.exe}
+                                </button>
+                                <span
+                                  className={`app-process-state ${N.running ? "is-running" : ""}`}
+                                >
+                                  {N.runningKnown
+                                    ? N.running
+                                      ? "running"
+                                      : "not running"
+                                    : "status unavailable"}
+                                </span>
+                              </div>
                               <div className="route-meta">
                                 <span
                                   className="route-badge"
@@ -580,16 +585,18 @@ export function App() {
                             </div>
                           </div>
                           <div className="minute" role="cell">
-                            <Spark down={N.down} up={N.up} />
+                            <Spark down={N.down} up={N.up} scale="application" />
                           </div>
-                          <div role="cell">
+                          <div className="download-cell" role="cell">
+                            <span className="compact-label">Download</span>
                             <SpeedBar
                               bps={N.downBps}
                               limit={z == null ? void 0 : z.downMbps}
                               kind="down"
                             />
                           </div>
-                          <div role="cell">
+                          <div className="upload-cell" role="cell">
+                            <span className="compact-label">Upload</span>
                             <SpeedBar
                               bps={N.upBps}
                               limit={z == null ? void 0 : z.upMbps}
@@ -785,17 +792,11 @@ export function App() {
   );
 }
 function AdapterCard({ card, running, onDefault }: any) {
-  const r: any = (D: any) =>
-    D != null && Number.isFinite(D) && D > 0
-      ? `${D.toLocaleString("en-US", {
-          maximumFractionDigits: 2,
-        })} Mbit/s`
-      : "—";
   return (
     <article className={`card surface ${card.default ? "is-default" : ""}`}>
       <header className="card-top">
         <div className="adapter-identity">
-          <h2>{card.name}</h2>
+          <h2 title={card.name}>{card.name}</h2>
           <p className="muted">
             {card.ip || card.ip6 || card.reason}
             {running && card.latencyMs ? ` · ${card.latencyMs} ms` : ""}
@@ -826,25 +827,8 @@ function AdapterCard({ card, running, onDefault }: any) {
           {<SmoothRate bps={card.upBps} />}
         </span>
       </div>
-      <div className="link-speeds">
-        <span className="link-speed-label">{"Link Speed"}</span>
-        <span
-          aria-label="Download Link Speed"
-          title="Negotiated receive link speed reported by Windows"
-        >
-          {"↓ "}
-          {r(card.linkDownMbps)}
-        </span>
-        <span
-          aria-label="Upload Link Speed"
-          title="Negotiated transmit link speed reported by Windows"
-        >
-          {"↑ "}
-          {r(card.linkUpMbps)}
-        </span>
-      </div>
       <div className="adapter-spark">
-        <Spark down={card.down} up={card.up} />
+        <Spark down={card.down} up={card.up} verticalZoom />
       </div>
       <div className="adapter-totals">
         <p>

@@ -2,6 +2,19 @@
 
 Technical notes for people who want to build, change or understand MultiRouteNetwork. For installing and using it, see the [README](../README.md).
 
+## Desktop responsive layout checks
+
+After `npm run build` in `desktop/frontend`, run
+`node desktop/frontend/tests/responsive-layout.cjs` from the repository root with
+Playwright and its Chromium browser installed. `PLAYWRIGHT_MODULE` can point to
+an existing Playwright installation; `LAYOUT_OUTPUT` overrides the output folder
+(default `diagnostics/resize-layout`). No dev server, native GUI, engine or live
+traffic is started. The test renders the built frontend in headless Chromium,
+intercepts all requests with local assets and synthetic API responses, and checks
+overflow, overlapping card badges and scroll reachability in both themes. It
+includes long names, IPv6 addresses, large counters and configured limits across
+Overview, Settings, Add/Edit app and Usage. Screenshots and JSON results are saved.
+
 ## Command line and flags
 
 ```
@@ -90,8 +103,8 @@ multiple adapters at once; this does not split a single TCP connection across li
 
 The controller shares a three-second cache of adapter names/indices between
 telemetry and status requests. Visible VPN addresses use the same metadata
-refresh window. Byte counters still sample at 250 ms and graphs retain 240
-samples (60 seconds); negotiated Link Speed is read fresh for each status.
+refresh window. Byte counters sample at 70 ms independently of the one-second scheduler tick, and graphs retain 858
+samples (60 seconds). Adapter identity metadata still uses the three-second cache.
 Enumeration is outside the transfer-accounting mutex. Enumeration failures
 temporarily clear the lookup and retry after one second. Counter baselines reset
 on an index/MAC change, counter reset or failed read, preventing stale rates and
@@ -165,7 +178,7 @@ scripts\fetch-wintun.ps1 -OutDir .
 ```
 
 Releases are built by GitHub Actions when a `vX.Y.Z` tag is pushed (`.github/workflows/release.yml`).
-`VERSION` records the current source milestone (0.4.5). Both Windows build scripts
+`VERSION` records the current source version (0.4.6). Both Windows build scripts
 read it when `-Version` is omitted; desktop packaging stamps the engine with
 `-X main.version=...`. The frontend package metadata and the engine source fallback
 must match `VERSION`. The 0.4.0–0.4.5 changelog sections are retrospective milestones,

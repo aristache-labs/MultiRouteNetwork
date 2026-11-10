@@ -20,7 +20,7 @@ func TestExecutableIconReadsResourceWithoutLaunching(t *testing.T) {
 		t.Fatalf("icon response %d", w.Code)
 	}
 	img, err := png.Decode(bytes.NewReader(w.Body.Bytes()))
-	if err != nil || img.Bounds().Dx() != 48 || img.Bounds().Dy() != 48 {
+	if err != nil || img.Bounds().Dx() != 96 || img.Bounds().Dy() != 96 {
 		t.Fatalf("icon decode: %v", err)
 	}
 }

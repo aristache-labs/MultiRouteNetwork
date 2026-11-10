@@ -17,7 +17,7 @@
   <a href="https://buymeacoffee.com/aristache">Buy me a coffee</a>
 </p>
 
-**Current source version: 0.4.5.** The Windows desktop application is **MultiRoute**;
+**Current source version: 0.4.6.** The Windows desktop application is **MultiRoute**;
 its engine, Go module and repository are **MultiRouteNetwork**. The project builds
 on the MIT-licensed net-merge engine. Copyright and third-party notices remain applicable.
 
@@ -118,9 +118,27 @@ a separate setting; enabling one does not imply enabling the other.
 
 ## Rates, graphs and limits
 
-Traffic counters update every **250 ms**. Graphs retain **60 seconds** (240 samples),
-with cyan for download and yellow for upload. Display transitions are smoothed;
+Overview applications are ordered by combined download/upload activity averaged
+with a two-second response time. Ranking updates once per second; a row passes
+another only with a lead above both 20% and 16 KB/s (128 kbit/s). Quiet traffic
+and near-equal rates retain their existing order.
+
+Traffic counters update every **70 ms**. Graphs display **60 seconds** (858 samples), matching the approximate scroll
+rate measured in the reference recording within the existing card size,
+with teal (`#00D2C1`) for download and yellow (`#FFCE00`) for upload, displayed at 85% opacity with subtler graph fills. Status polling and traffic measurements run every **70 ms**; numeric rates refresh every **70 ms**; graph scrolling and scale changes are smoothed;
 raw byte accounting and traffic enforcement do not use interpolated display values.
+Graph curves use a 1-second trailing average of the 70 ms samples to reduce short
+burst spikes; measured numeric rates and byte totals remain unchanged.
+On idle-to-traffic transitions, the vertical ceiling is seeded from available
+measurements and held during the one-second ramp to prevent top-edge clipping.
+Header and adapter graphs use a minimum visual ceiling of 100 Mbit/s so background traffic does not
+fill the plot. This ceiling expands for higher traffic and imposes no traffic limit.
+Adapter graphs use square-root vertical scaling to make low/sustained traffic more
+visible below short peaks without enlarging cards. Download and upload share
+this visual scale; numeric rates remain measured values. Header and application
+graphs keep linear vertical scaling. Application graphs use their own automatic
+scale with a minimum ceiling of 128 kbit/s to reveal small activity peaks; this
+does not change the separate 100 Mbit/s scale of unlimited application rate bars.
 
 Each application's `using` text lists adapters with open connections, ordered by
 observed usage. Running state reflects process presence, not whether data is moving.
@@ -130,9 +148,7 @@ is the bar maximum. Without a limit, the visual maximum is **100 Mbit/s**. Value
 above the maximum fill the bar; they remain visible numerically. This display scale
 never imposes a 100 Mbit/s traffic cap and is not scaled to the fastest app or Link Speed.
 
-Adapter cards show negotiated **Link Speed separately for download and upload**
-when available. These are link-layer rates, not measurements of internet capacity
-or guaranteed throughput. Unsupported values are shown as unavailable.
+Adapter cards omit negotiated Link Speed; they show current transfer rates and traffic totals.
 
 Application-wide and applicable adapter limits combine. Empty fields mean unlimited.
 Small UDP traffic counts toward application limits. Data caps count download plus
@@ -160,8 +176,10 @@ Automatic updates are not implemented as an active installation channel. The
 Settings controls are placeholders until a signed release channel is available.
 Any future update installation must happen while routing is stopped.
 
-**Known UI work:** adapter cards and application rows still need responsive layout
-improvements at narrow window sizes and with Settings open. This remains pending.
+The dashboard adapts to the space remaining beside Settings or an application
+panel. Adapter cards move onto additional rows; narrow application rows stack
+identity, labeled download/upload bars and usage totals. The dashboard and panel
+scroll independently so controls remain reachable in smaller windows.
 
 ## Build and verify
 
@@ -191,7 +209,7 @@ npm ci
 npm run build
 Pop-Location
 
-go build -ldflags "-H=windowsgui -X main.version=0.4.5" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=0.4.6" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
 go build -o dist/multiroute/MultiRoute.exe ./desktop
 ```
 
@@ -218,7 +236,7 @@ parameters and [diagnostic documentation](docs/DEVELOPING.md) before running it.
 
 The engine supports a **loopback-only** Go profiler through `-pprof`. Windows
 telemetry caches adapter identity metadata for three seconds while refreshing
-traffic counters every 250 ms. Windows packet IO reuses buffers without changing
+traffic counters every 70 ms. Windows packet IO reuses buffers without changing
 the scheduler or packet ownership guarantees.
 
 Local validation after buffer reuse measured approximately **94% fewer sampled

@@ -4,6 +4,7 @@ import (
 	"MultiRouteNetwork/internal/engine"
 	"MultiRouteNetwork/internal/nics"
 	"errors"
+	"math"
 	"net"
 	"sync"
 	"testing"
@@ -75,7 +76,7 @@ func TestAdapterCacheConcurrentReadersEnumerateOnce(t *testing.T) {
 	}
 }
 
-func TestCachedIdentityKeepsQuarterSecondCountersAndGraphs(t *testing.T) {
+func TestCachedIdentityKeepsSeventyMillisecondCountersAndGraphs(t *testing.T) {
 	s := New("", nil)
 	sw := &testSwitch{}
 	sw.on.Store(true)
@@ -96,29 +97,29 @@ func TestCachedIdentityKeepsQuarterSecondCountersAndGraphs(t *testing.T) {
 	}
 	snap := []engine.SlotStats{{Name: "Ethernet", Present: true}}
 	skipped := []nics.Skip{{Name: "MultiRouteNetwork", Reason: "virtual adapter"}}
-	s.Sample(snap, skipped, 250*time.Millisecond) // Baseline, not a full interval.
-	for i := 0; i < 12; i++ {
-		now = now.Add(250 * time.Millisecond)
-		s.Sample(snap, skipped, 250*time.Millisecond)
+	s.Sample(snap, skipped, 70*time.Millisecond) // Baseline, not a full interval.
+	for i := 0; i < 60; i++ {
+		now = now.Add(70 * time.Millisecond)
+		s.Sample(snap, skipped, 70*time.Millisecond)
 		// Status and sampling share the same interface cache.
 		status := s.Snapshot(nil, nil, true)
-		if status.DownBps != 4000 || status.UpBps != 2000 {
-			t.Fatalf("wrong quarter-second rates: %v/%v", status.DownBps, status.UpBps)
+		if math.Abs(status.DownBps-1000/0.07) > 1e-8 || math.Abs(status.UpBps-500/0.07) > 1e-8 {
+			t.Fatalf("wrong 70ms rates: %v/%v", status.DownBps, status.UpBps)
 		}
 	}
-	if counterReads != 13 || enumerations != 2 {
+	if counterReads != 61 || enumerations != 2 {
 		t.Fatalf("counter reads=%d enumerations=%d", counterReads, enumerations)
 	}
-	if s.uses["Ethernet"].todayDown != 12000 || s.uses["Ethernet"].todayUp != 6000 {
+	if s.uses["Ethernet"].todayDown != 60000 || s.uses["Ethernet"].todayUp != 30000 {
 		t.Fatal("changed accumulated usage")
 	}
 	g := s.graphs["Ethernet"]
-	if len(g.down) != 240 {
+	if len(g.down) != 858 {
 		t.Fatal("changed 60-second history length")
 	}
-	for _, v := range g.down[len(g.down)-12:] {
-		if v != 4000 {
-			t.Fatal("skipped quarter-second graph sample")
+	for _, v := range g.down[len(g.down)-60:] {
+		if math.Abs(v-1000/0.07) > 1e-8 {
+			t.Fatal("skipped 70ms graph sample")
 		}
 	}
 }

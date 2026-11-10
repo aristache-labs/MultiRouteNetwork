@@ -1,29 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-// Presentation only: telemetry, accounting, and routing keep the measured rate.
+// Presentation only: publish numbers every 70 ms, never per animation frame.
+// Keep collecting the latest telemetry without restarting the display timer.
 export function useSmoothRate(bps = 0) {
   const target = Number.isFinite(bps) ? Math.max(0, bps) : 0;
-  const current = useRef(target);
+  const latest = useRef(target);
+  latest.current = target;
   const [displayed, setDisplayed] = useState(target);
   useEffect(() => {
-    if (target === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      current.current = target;
-      setDisplayed(target);
-      return;
-    }
-    const from = current.current;
-    const start = performance.now();
-    let frame = 0;
-    const animate = (now: number) => {
-      const progress = Math.min(1, (now - start) / 250);
-      current.current = from + (target - from) * progress;
-      setDisplayed(current.current);
-      if (progress < 1) frame = requestAnimationFrame(animate);
-    };
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [target]);
-  return target === 0 ? 0 : displayed;
+    const timer = window.setInterval(() => setDisplayed(latest.current), 70);
+    return () => window.clearInterval(timer);
+  }, []);
+  return displayed;
 }
 
 export function SmoothRate({ bps = 0 }: { bps?: number }) {
