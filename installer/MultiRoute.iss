@@ -23,7 +23,8 @@ SolidCompression=yes
 WizardStyle=modern
 LicenseFile=LICENSE
 SourceDir=..\dist\MultiRoute-{#Version}-windows
-OutputDir=..\dist
+; OutputDir is relative to SourceDir, so this is the repository dist folder.
+OutputDir=..\..\dist
 OutputBaseFilename=MultiRoute-{#Version}-windows-setup
 UninstallDisplayIcon={app}\MultiRoute.exe
 CloseApplications=yes

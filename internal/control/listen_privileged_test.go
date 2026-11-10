@@ -16,7 +16,7 @@ import (
 )
 
 func TestPrivilegedSocketRejectsTheWrongUserWithoutApplyingTheRequest(t *testing.T) {
-	dir := t.TempDir()
+	dir := shortServiceDir(t)
 	if err := WriteAuth(dir, Auth{UID: 1000, Exe: "/usr/bin/MultiRoute"}); err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestPrivilegedSocketRejectsTheWrongUserWithoutApplyingTheRequest(t *testing
 }
 
 func TestPrivilegedSocketSurvivesADroppedClient(t *testing.T) {
-	dir := t.TempDir()
+	dir := shortServiceDir(t)
 	if err := WriteAuth(dir, Auth{UID: 1000, Exe: "/usr/bin/MultiRoute"}); err != nil {
 		t.Fatal(err)
 	}
@@ -101,6 +101,17 @@ func restorePeer(t *testing.T, fn func(net.Conn) (int, string, error)) {
 	prev := peerOf
 	peerOf = fn
 	t.Cleanup(func() { peerOf = prev })
+}
+
+// macOS rejects a unix socket path longer than 104 bytes. t.TempDir includes the test name.
+func shortServiceDir(t *testing.T) string {
+	t.Helper()
+	dir, err := os.MkdirTemp("/tmp", "mr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	return dir
 }
 
 func dialMissing(t *testing.T) error {
