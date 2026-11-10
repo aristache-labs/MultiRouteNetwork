@@ -15,12 +15,33 @@ for name in APPLE_CERTIFICATE_BASE64 APPLE_CERTIFICATE_PASSWORD APPLE_NOTARY_ISS
 done
 keychain="$RUNNER_TEMP/multiroute.keychain"
 cert="$RUNNER_TEMP/developer-id.p12"
+pem="$RUNNER_TEMP/developer.pem"
 notary="$RUNNER_TEMP/notary-key.p8"
-printf '%s' "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$cert"
-printf '%s' "$APPLE_NOTARY_KEY_BASE64" | base64 --decode > "$notary"
+printf '%s' "$APPLE_CERTIFICATE_BASE64" | tr -d '[:space:]' | base64 --decode > "$cert"
+printf '%s' "$APPLE_NOTARY_KEY_BASE64" | tr -d '[:space:]' | base64 --decode > "$notary"
+# OpenSSL 3 seals the PKCS#12 with a SHA-256 MAC. macOS security import
+# rejects that MAC and reports a wrong password. Rewrite it as SHA-1.
+p12pass=$(printf '%s' "$APPLE_CERTIFICATE_PASSWORD" | tr -d '\r\n')
+export MR_P12_PASS="$p12pass"
+openssl_bin=
+for candidate in /opt/homebrew/opt/openssl@3/bin/openssl /usr/local/opt/openssl@3/bin/openssl; do
+  if [ -x "$candidate" ]; then
+    openssl_bin=$candidate
+    break
+  fi
+done
+if [ -z "$openssl_bin" ]; then
+  echo "OpenSSL 3 is required to import the certificate" >&2
+  exit 1
+fi
+"$openssl_bin" pkcs12 -in "$cert" -passin env:MR_P12_PASS -nodes -out "$pem"
+"$openssl_bin" pkcs12 -export -in "$pem" -out "$cert" -passout env:MR_P12_PASS -macalg SHA1 || status=$?
+rm -f "$pem"
+unset MR_P12_PASS
+test "${status:-0}" -eq 0
 security create-keychain -p multiroute "$keychain"
 security unlock-keychain -p multiroute "$keychain"
-security import "$cert" -k "$keychain" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+security import "$cert" -k "$keychain" -P "$p12pass" -f pkcs12 -T /usr/bin/codesign
 security set-key-partition-list -S apple-tool:,apple: -s -k multiroute "$keychain" >/dev/null
 identity=$(security find-identity -v -p codesigning "$keychain" | awk -F\" 'NR==1 {print $2}')
 test -n "$identity"
