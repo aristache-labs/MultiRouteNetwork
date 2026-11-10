@@ -40,7 +40,7 @@ jobs:
         run: npm ci
       - name: Release notes from CHANGELOG.md
         shell: pwsh
-        run: scripts/release-notes.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v')) -Out release-notes.md
+        run: scripts/release-notes.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v')) -Out (Join-Path $env:RUNNER_TEMP 'release-notes.md')
       - name: Package the Windows desktop
         shell: pwsh
         run: scripts/package-desktop.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v'))
@@ -50,6 +50,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go test ./...
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify binary source provenance
+        shell: pwsh
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          foreach ($name in @('MultiRoute.exe', 'MultiRouteNetwork.exe')) {
+            $metadata = (& go version -m (Join-Path 'dist/multiroute' $name) | Out-String)
+            if ($LASTEXITCODE -ne 0) { throw "Cannot read build metadata for $name" }
+            if ($metadata -notmatch "vcs.revision=$env:EXPECTED_COMMIT") { throw "Wrong source commit in $name" }
+            if ($metadata -notmatch 'vcs.modified=false') { throw "Uncommitted source changes in $name" }
+          }
       - name: Create the Windows archive
         shell: pwsh
         run: |
@@ -78,9 +89,9 @@ jobs:
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag $zip --clobber
-            gh release edit $tag --title $title --notes-file release-notes.md
+            gh release edit $tag --title $title --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
           } else {
-            gh release create $tag $zip --title $title --notes-file release-notes.md
+            gh release create $tag $zip --title $title --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
           }
 
   aliases:
