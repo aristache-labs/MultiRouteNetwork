@@ -18,10 +18,25 @@ if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
 } finally { Pop-Location }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRouteNetwork.exe") .\cmd\MultiRouteNetwork
-if ($LASTEXITCODE -ne 0) { throw "MultiRouteNetwork engine build failed" }
-go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRoute.exe") .\desktop
-if ($LASTEXITCODE -ne 0) { throw "MultiRoute desktop build failed" }
+$ico = Join-Path $OutDir "MultiRoute.ico"
+go run ./cmd/MultiRouteNetwork _icon $ico
+if ($LASTEXITCODE -ne 0) { throw "icon export failed" }
+
+function Add-WindowsIcon([string]$PkgDir, [string]$Product, [string]$Description, [string]$FileName) {
+    $out = Join-Path $PkgDir "rsrc"
+    go run github.com/tc-hib/go-winres@v0.3.3 simply --arch amd64 --out $out --icon $ico --manifest cli --product-name $Product --file-description $Description --original-filename $FileName --product-version $Version --file-version $Version --copyright "MultiRouteNetwork contributors"
+    if ($LASTEXITCODE -ne 0) { throw "windows icon failed for $FileName" }
+}
+try {
+    Add-WindowsIcon "cmd\MultiRouteNetwork" "MultiRouteNetwork" "MultiRoute routing engine" "MultiRouteNetwork.exe"
+    go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRouteNetwork.exe") .\cmd\MultiRouteNetwork
+    if ($LASTEXITCODE -ne 0) { throw "MultiRouteNetwork engine build failed" }
+    Add-WindowsIcon "desktop" "MultiRoute" "MultiRoute" "MultiRoute.exe"
+    go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRoute.exe") .\desktop
+    if ($LASTEXITCODE -ne 0) { throw "MultiRoute desktop build failed" }
+} finally {
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path "cmd\MultiRouteNetwork" "rsrc_windows_amd64.syso"), (Join-Path "desktop" "rsrc_windows_amd64.syso")
+}
 
 $winioModule = go list -m -f '{{.Dir}}' github.com/Microsoft/go-winio
 if ($LASTEXITCODE -ne 0) { throw "Could not locate go-winio license" }

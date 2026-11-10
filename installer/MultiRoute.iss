@@ -22,6 +22,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 LicenseFile=LICENSE
+SetupIconFile=..\dist\multiroute\MultiRoute.ico
 SourceDir=..\dist\MultiRoute-{#Version}-windows
 ; OutputDir is relative to SourceDir, so this is the repository dist folder.
 OutputDir=..\..\dist
@@ -47,8 +48,8 @@ Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\MultiRoute"; Filename: "{app}\MultiRoute.exe"; Comment: "Route applications across network adapters"
-Name: "{autodesktop}\MultiRoute"; Filename: "{app}\MultiRoute.exe"; Tasks: desktopicon
+Name: "{autoprograms}\MultiRoute"; Filename: "{app}\MultiRoute.exe"; IconFilename: "{app}\MultiRoute.exe"; Comment: "Route applications across network adapters"
+Name: "{autodesktop}\MultiRoute"; Filename: "{app}\MultiRoute.exe"; IconFilename: "{app}\MultiRoute.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\MultiRoute.exe"; Description: "Start MultiRoute"; Flags: nowait postinstall skipifsilent
