@@ -31,7 +31,7 @@ jobs:
           $version = $Matches[1]
           if ((Get-Content VERSION -Raw).Trim() -ne $version) { throw 'Tag does not match VERSION' }
           $package = Get-Content desktop/frontend/package.json -Raw | ConvertFrom-Json
-          $lock = Get-Content desktop/frontend/package-lock.json -Raw | ConvertFrom-Json
+          $lock = Get-Content desktop/frontend/package-lock.json -Raw | ConvertFrom-Json -AsHashtable
           if ($package.version -ne $version -or $lock.version -ne $version -or $lock.packages.''.version -ne $version) {
             throw 'Frontend package versions do not match tag'
           }
