@@ -1,0 +1,33 @@
+name: release-aliases
+# Adds a copy of the Windows desktop zip without the version in its name, so
+# releases/latest/download/MultiRoute-windows.zip stays current.
+# The release workflow runs it. Run it by hand to attach the copy to an existing release.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, like v0.4.8
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  aliases:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload the version-less Windows archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          v=${TAG#v}
+          mkdir aliases && cd aliases
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "MultiRoute-$v-windows.zip"
+          mv "MultiRoute-$v-windows.zip" MultiRoute-windows.zip
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber ./MultiRoute-windows.zip

@@ -1,0 +1,59 @@
+name: verify-repos
+# Checks the Windows desktop zip attached to a GitHub release. It does not install
+# the app, start the GUI, or contact a package repository.
+# Actions > verify-repos > Run workflow, after a release exists.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, like v0.4.8. Empty uses the latest release.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  windows-zip:
+    runs-on: windows-latest
+    steps:
+      - name: Download the published Windows archive
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          if ([string]::IsNullOrWhiteSpace($env:TAG)) {
+            gh release download --repo $env:GITHUB_REPOSITORY -p "MultiRoute-*.zip" -D dist
+          } else {
+            gh release download $env:TAG --repo $env:GITHUB_REPOSITORY -p "MultiRoute-*.zip" -D dist
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed' }
+          if (-not (Get-ChildItem dist\MultiRoute-*.zip -ErrorAction SilentlyContinue)) {
+            throw 'no MultiRoute Windows zip on this release'
+          }
+      - name: Check the archive and engine version
+        shell: pwsh
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          $zip = Get-ChildItem dist\MultiRoute-*.zip | Sort-Object Name | Select-Object -First 1
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath dist\check
+          $root = Get-ChildItem dist\check -Directory | Select-Object -First 1
+          if (-not $root) { throw 'archive has no top-level folder' }
+          foreach ($name in @(
+            'MultiRoute.exe', 'MultiRouteNetwork.exe', 'wintun.dll',
+            'wintun-LICENSE.txt', 'go-winio-LICENSE.txt', 'README.txt',
+            'LICENSE', 'THIRD-PARTY-NOTICES.md'
+          )) {
+            if (-not (Test-Path -LiteralPath (Join-Path $root.FullName $name))) { throw "missing $name" }
+          }
+          $version = (& (Join-Path $root.FullName 'MultiRouteNetwork.exe') version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Engine version command failed' }
+          if ($version -notmatch '^MultiRouteNetwork \d+\.\d+\.\d+$') { throw "unexpected version output: $version" }
+          if (-not [string]::IsNullOrWhiteSpace($env:TAG)) {
+            $expected = $env:TAG.TrimStart('v')
+            if ($version -ne "MultiRouteNetwork $expected") { throw "expected $expected, got $version" }
+          }
+          Write-Host $version

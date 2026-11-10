@@ -1,0 +1,90 @@
+name: release
+# Push a tag like v0.4.8 to build the Windows desktop zip and publish a GitHub release.
+# Notes come from that version's CHANGELOG.md section. This does not build the legacy
+# tray installer or publish Linux package repositories.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/frontend/package-lock.json
+      - name: Validate release version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Expected tag vX.Y.Z' }
+          $version = $Matches[1]
+          if ((Get-Content VERSION -Raw).Trim() -ne $version) { throw 'Tag does not match VERSION' }
+          $package = Get-Content desktop/frontend/package.json -Raw | ConvertFrom-Json
+          $lock = Get-Content desktop/frontend/package-lock.json -Raw | ConvertFrom-Json
+          if ($package.version -ne $version -or $lock.version -ne $version -or $lock.packages.''.version -ne $version) {
+            throw 'Frontend package versions do not match tag'
+          }
+      - name: Install frontend dependencies
+        working-directory: desktop/frontend
+        run: npm ci
+      - name: Release notes from CHANGELOG.md
+        shell: pwsh
+        run: scripts/release-notes.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v')) -Out release-notes.md
+      - name: Package the Windows desktop
+        shell: pwsh
+        run: scripts/package-desktop.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v'))
+      - name: Verify Go packages
+        run: |
+          go vet ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create the Windows archive
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          $stageName = "MultiRoute-$version-windows"
+          $stage = Join-Path dist $stageName
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          foreach ($name in @(
+            'MultiRoute.exe', 'MultiRouteNetwork.exe', 'wintun.dll',
+            'wintun-LICENSE.txt', 'go-winio-LICENSE.txt', 'README.txt'
+          )) {
+            Copy-Item -LiteralPath (Join-Path 'dist\multiroute' $name) -Destination (Join-Path $stage $name)
+          }
+          Copy-Item -LiteralPath LICENSE -Destination (Join-Path $stage 'LICENSE')
+          Copy-Item -LiteralPath THIRD-PARTY-NOTICES.md -Destination (Join-Path $stage 'THIRD-PARTY-NOTICES.md')
+          Compress-Archive -Path $stage -DestinationPath "dist\$stageName.zip"
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $version = $tag.TrimStart('v')
+          $title = "MultiRouteNetwork $version"
+          $zip = "dist/MultiRoute-$version-windows.zip"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $zip --clobber
+            gh release edit $tag --title $title --notes-file release-notes.md
+          } else {
+            gh release create $tag $zip --title $title --notes-file release-notes.md
+          }
+
+  aliases:
+    needs: release
+    uses: ./.github/workflows/release-aliases.yml
+    with:
+      tag: ${{ github.ref_name }}
