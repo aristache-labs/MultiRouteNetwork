@@ -1,280 +1,276 @@
-<p align="center">
-  <img src="docs/icon.png" width="96" alt="MultiRouteNetwork icon">
-</p>
+<div align="center">
 
-<h1 align="center">MultiRouteNetwork · MultiRoute</h1>
+<img src="docs/icon.png" width="76" alt="MultiRoute">
 
-<p align="center">
-  <strong>Route applications across your network adapters.</strong><br>
-  Use multiple connections together when an application opens multiple network flows.
-</p>
+# MultiRoute · MultiRouteNetwork
 
-<p align="center">
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork">Repository</a> ·
-  <a href="CHANGELOG.md">Changelog</a> ·
-  <a href="docs/DEVELOPING.md">How it works</a> ·
-  <a href="https://github.com/aristache-labs/MultiRouteNetwork/issues">Issues</a> ·
-  <a href="https://buymeacoffee.com/aristache">Buy me a coffee</a>
-</p>
+<em>Route applications across your network adapters. Monitor traffic, set limits, and keep control from one desktop.</em>
 
-**Current source version: 0.4.8.** The Windows desktop application is **MultiRoute**;
-its engine, Go module and repository are **MultiRouteNetwork**. The project builds
-on the MIT-licensed net-merge engine. Copyright and third-party notices remain applicable.
+<br />
 
-Versions 0.4.0–0.4.5 are retrospective milestones documenting work accumulated
-after 0.3.7, not a claim that six separate releases were published. See the
-[changelog](CHANGELOG.md) for the complete breakdown. A source version does not
-imply a matching GitHub tag, installer or downloadable release.
+<a href="https://github.com/aristache-labs/MultiRouteNetwork/releases/latest">Download for Windows</a>
 
-## What is included
+<br /><br />
 
-The Windows desktop uses Wails v3, React/TypeScript and WebView2. Its window runs
-without elevation and controls a separately elevated engine through a per-user
-named pipe. No account, activation service or anonymous usage reporting is added.
+<img src="docs/dashboard.png" width="100%" alt="MultiRoute dark dashboard with adapter graphs and per-application traffic">
 
-| Area | Current behavior |
-|---|---|
-| Overview | Connected adapter cards, registered applications, running state, traffic rates and graphs |
-| Application routing | All eligible adapters, one adapter, or a selected subset; configurable fallback |
-| Matching | Executable name or exact path; exact-path rules take precedence |
-| Limits | Separate download/upload limits for applications and adapters |
-| Caps | Daily/monthly download-plus-upload caps, warning at 80%, blocking at the cap |
-| Usage | Local SQLite history; Today, 7 days, 30 days, This month, All; CSV export |
-| DNS | Per-app Windows default, Cloudflare, Google, Quad9 or custom plain DNS |
-| Startup | Separate Start with Windows and Start routing when it opens controls |
-| Window | Dark/light header toggle; styled Hide to tray / Exit prompt with remembered choice |
-| Updates | Visual placeholder; automatic installation remains disabled |
+<br />
 
-Overview shows only applications you add with **+ Add app**. Other routed traffic
-can still appear in Usage. Multiple processes matching one application rule are
-aggregated; unidentified owners remain **Unknown** rather than being guessed.
+![CI](https://shields.io/github/actions/workflow/status/aristache-labs/MultiRouteNetwork/ci.yml?branch=main&style=flat-square&label=CI&labelColor=0f6e68)
+![Release](https://shields.io/github/v/release/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![Stars](https://shields.io/github/stars/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![Contributors](https://shields.io/github/contributors/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![License: MIT](https://shields.io/github/license/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![Last commit](https://shields.io/github/last-commit/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![Issues](https://shields.io/github/issues/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
+![Watchers](https://shields.io/github/watchers/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
 
-The underlying engine retains command-line/tray code for Windows, macOS and Linux.
-The Wails desktop and the recent buffer/lifecycle optimizations described here
-are Windows work; they do not establish equivalent desktop features or performance
-on other platforms. This repository does not contain an Android app.
+<strong>Windows desktop &middot; per-app routing &middot; multiple adapters &middot; local usage history &middot; dark and light themes</strong><br>
+<sub>Source version <b>0.4.9</b>. The GUI is MultiRoute; the routing engine is MultiRouteNetwork. CI builds the frontend and runs Go checks on Windows, Linux and macOS. Windows release builds verify that both executables come from the tagged commit with a clean source tree.</sub>
 
-## How routing works
+<br />
 
-Every new connection is assigned to one eligible adapter and stays pinned there.
-An application opening several connections can use several adapters simultaneously.
-A single TCP download, such as one ordinary `curl` transfer, is not split across links.
+[Stack](#stack) &middot; [The app](#the-app) &middot; [Local setup](#local-setup) &middot; [Settings and app rules](#settings-and-app-rules) &middot; [Deployment](#deployment)
 
-- **Use all** uses the automatic weighted scheduler across eligible adapters.
-- **Several adapters** uses the same scheduler within the selected subset.
-- **One adapter** pins new flows to the selected adapter, subject to its fallback rule.
-- **Use whichever adapter answers fastest** intentionally chooses one permitted
-  adapter for new connections, with an eight-second hold to reduce switching.
-- Rule changes affect new connections. Existing ones retain their adapter.
-- A preferred adapter in MultiRoute does not change the Windows default route.
+<sub><b>Developers / AI agents:</b> architecture and platform details live in <a href="docs/DEVELOPING.md">DEVELOPING.md</a>; routing, limits and diagnostics are explained in the <a href="docs/USER-GUIDE.md">user and technical guide</a>.</sub>
 
-Automatic balancing uses busy-flow load and smoothed capacity estimates, with
-health checks, cooldowns and retry exclusions. Idle TCP connections are discounted.
-See [DEVELOPING.md](docs/DEVELOPING.md) for the exact policy and IPv6 trade-offs.
+<br /><br />
 
-**Ethernet and Wi-Fi connected to the same router share its WAN capacity.** They
-are not two independent internet connections. A phone hotspot may provide a
-separate upstream, but shared bottlenecks and the server can still limit total speed.
+<img src="docs/download.gif" width="100%" alt="Recorded MultiRoute traffic graphs, application activity and system tray menu">
 
-Real VPNs such as Tailscale may appear as informational cards but are not routing
-candidates. The engine TUN and WSL/Docker/Hyper-V infrastructure adapters are hidden.
+<br />
+</div>
 
-## Run the Windows desktop
+---
 
-Build the package from source as described below, or use matching assets actually
-available on the [repository's releases page](https://github.com/aristache-labs/MultiRouteNetwork/releases).
-This README does not assume an installer or hosted package repository exists.
+## Overview
 
-Keep these files together in `dist/multiroute`:
+MultiRoute is a Windows desktop for routing applications over Ethernet, Wi-Fi and other eligible internet adapters. Choose which connections each app may use, monitor download/upload rates, apply speed limits or data caps, and review usage stored on your own PC.
 
-- `MultiRoute.exe` — desktop window and its system tray controls.
-- `MultiRouteNetwork.exe` — routing engine.
-- `wintun.dll` and `wintun-LICENSE.txt` — native driver and its license.
-- `go-winio-LICENSE.txt` and `README.txt` — accompanying package notices/instructions.
+**One connection stays on one adapter.** Applications with multiple connections can use several adapters at once; a single TCP transfer is not split across links. Ethernet and Wi-Fi on the same router still share that router's internet capacity.
 
-WebView2 is required. Launch **MultiRoute.exe** yourself. Start requests elevation
-for the engine and launches it as `run -hidden`; it does not launch engine tray mode.
-Unsigned builds may receive Windows trust or antivirus prompts.
+The project builds on the MIT-licensed net-merge engine. The current Wails desktop package targets **Windows x64**. Cross-platform CI also checks the inherited engine and desktop compilation; it does not establish native desktop feature parity on Linux or macOS.
 
-### Start, Stop and Exit
+## Table of Contents
 
-Adapters and saved applications are visible before routing starts. You can add or
-edit application rules while stopped, including when the engine is not running.
+- [Overview](#overview)
+- [Stack](#stack)
+- [The app](#the-app)
+- [Architecture overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Local setup](#local-setup)
+  - [1. Download and run](#1-download-and-run)
+  - [2. Clone and install](#2-clone-and-install)
+  - [3. Build the desktop package](#3-build-the-desktop-package)
+  - [4. Verify locally](#4-verify-locally)
+- [Commands](#commands)
+- [Settings and app rules](#settings-and-app-rules)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [Contributors](#contributors)
+- [License](#license)
+- [Support the project](#support-the-project)
+- [Connect](#connect)
 
-- **Start** enables routing and statistics. The first Start performs full TUN setup.
-- **Stop** closes routed TCP/UDP sockets and pending dials, removes capture routes
-  and pauses routed accounting. The Windows adapter and stack remain prepared
-  for faster subsequent starts. Applications may need to reconnect.
-- **Hide to system tray** hides the window and leaves the engine's current state intact.
-- **Exit** flushes state, stops routing and closes the engine, retained adapter and stack.
+---
 
-The window X shows a styled choice between Hide and Exit. Its checkbox remembers
-the selected action. Change that preference in **Settings → When closing the window**.
-A cancelled elevation prompt or a startup delay is distinct from an established
-engine communication failure.
+## Stack
 
-Start with Windows starts the window in the tray. Start routing when it opens is
-a separate setting; enabling one does not imply enabling the other.
+| Layer | Technology |
+| --- | --- |
+| Desktop framework | Wails v3 |
+| Frontend | React 19, TypeScript, Vite, CSS |
+| Native webview | Microsoft WebView2 on Windows |
+| Routing engine | Go, tun2socks and gVisor netstack |
+| Network device | Wintun on Windows |
+| GUI / engine transport | Per-user Windows named pipe through go-winio |
+| Local storage | SQLite through modernc.org/sqlite |
+| Icons | Inline SVG controls and generated native MultiRoute icons |
+| Frontend package manager | npm |
+| Tests | Go tests, race detector, Node tests and offline Playwright checks |
+| Distribution | GitHub Actions builds a Windows x64 portable ZIP from a version tag |
 
-## Rates, graphs and limits
+---
 
-Overview lists running applications first and confirmed stopped applications last,
-with unknown process states in between. Within each group, applications are ordered
-by combined download/upload activity averaged
-with a two-second response time. Ranking updates once per second; a row passes
-another only with a lead above both 20% and 16 KB/s (128 kbit/s). Quiet traffic
-and near-equal rates retain their existing order.
+## The app
 
-Traffic counters update every **70 ms**. Graphs display **60 seconds** (858 samples), matching the approximate scroll
-rate measured in the reference recording within the existing card size,
-with teal (`#00D2C1`) for download and yellow (`#FFCE00`) for upload, displayed at 85% opacity with subtler graph fills. Status polling and traffic measurements run every **70 ms**; numeric rates refresh every **70 ms**; graph scrolling and scale changes are smoothed;
-raw byte accounting and traffic enforcement do not use interpolated display values.
-Graph curves use a 1-second trailing average of the 70 ms samples to reduce short
-burst spikes; measured numeric rates and byte totals remain unchanged.
-On idle-to-traffic transitions, the vertical ceiling is seeded from available
-measurements and held during the one-second ramp to prevent top-edge clipping.
-Header and adapter graphs use a minimum visual ceiling of 100 Mbit/s so background traffic does not
-fill the plot. This ceiling expands for higher traffic and imposes no traffic limit.
-Adapter graphs use square-root vertical scaling to make low/sustained traffic more
-visible below short peaks without enlarging cards. Download and upload share
-this visual scale; numeric rates remain measured values. Header and application
-graphs keep linear vertical scaling. Application graphs use their own automatic
-scale with a minimum ceiling of 128 kbit/s to reveal small activity peaks; this
-does not change the separate 100 Mbit/s scale of unlimited application rate bars.
+1. **Overview** — adapter cards, connection state, download/upload graphs and daily/monthly totals.
+2. **Applications** — add executable-name or exact-path rules; running apps stay above stopped apps, with stable traffic ordering.
+3. **Routing** — use all eligible adapters, one adapter or a selected subset, with configurable fallback.
+4. **Limits** — independent download/upload limits, per-adapter limits and daily/monthly data caps.
+5. **Usage** — local traffic history for Today, 7 days, 30 days, This month or All, with CSV export.
+6. **Appearance** — dark/light themes, responsive panels and inline download/upload icons.
+7. **System tray** — show the window, inspect total/adapter rates, Start/Stop routing or Exit. Tooltip statistics refresh once per second.
 
-Each application's `using` text lists adapters with open connections, ordered by
-observed usage. Running state reflects process presence, not whether data is moving.
+Screenshots document the supplied captures; some show controls from before the latest icon refresh. The GIF demonstrates traffic activity rather than a guaranteed throughput result.
 
-Application rate bars start at zero. With a directional speed limit, that limit
-is the bar maximum. Without a limit, the visual maximum is **100 Mbit/s**. Values
-above the maximum fill the bar; they remain visible numerically. This display scale
-never imposes a 100 Mbit/s traffic cap and is not scaled to the fastest app or Link Speed.
+<table>
+<tr><td width="50%"><b>Light theme</b><br><img src="docs/light.png" alt="Light dashboard with adapter cards"></td><td width="50%"><b>Application routing</b><br><img src="docs/modifyapp.png" alt="Edit application routing and usage details"></td></tr>
+<tr><td><b>Settings</b><br><img src="docs/settings.png" alt="Startup, window and adapter limit settings"></td><td><b>Usage history</b><br><img src="docs/usage.png" alt="Usage history and CSV export"></td></tr>
+<tr><td colspan="2"><b>Add an application</b><br><img src="docs/addapp.png" width="100%" alt="Add an application and choose its routing policy"></td></tr>
+</table>
 
-Adapter cards omit negotiated Link Speed; they show current transfer rates and traffic totals.
+---
 
-Application-wide and applicable adapter limits combine. Empty fields mean unlimited.
-Small UDP traffic counts toward application limits. Data caps count download plus
-upload; reaching the cap stops that application's routed flows for the period.
-Removing the cap clears its block and warning immediately; raising it rechecks
-consumed usage without restarting the engine or clearing history. Interrupted
-connections must reconnect.
+## Architecture overview
 
-## Usage, state and limitations
+- **Desktop** — `desktop/` hosts Wails, the local API, native window lifecycle and tray. React/TypeScript source is in `desktop/frontend/src/`.
+- **Engine** — `cmd/MultiRouteNetwork/` launches the separate routing process. The GUI runs without elevation and requests elevation for the engine as needed.
+- **Control** — `internal/control/` owns saved rules, settings, limits, usage accounting and the per-user pipe `\\.\pipe\MultiRoute-<SID>`.
+- **Balancing** — new connections use weighted busy-flow scheduling for all/several adapters. Fastest mode deliberately chooses one adapter, with an eight-second hold. Existing connections retain their adapter.
+- **Storage** — `%LOCALAPPDATA%\MultiRouteNetwork\multiroute.db` stores rules, settings and usage. Window-close preferences are stored alongside it.
+- **Graphs** — traffic sampling and displayed numeric rates update every 70 ms. Graphs retain approximately 60 seconds and use one-second visual smoothing. Presentation does not change measured byte totals or traffic limits.
+- **Local data** — no account or analytics service is added. Usage covers traffic observed through the routing engine, not all historical Windows traffic.
 
-Rules, settings and usage are stored locally in
-`%LOCALAPPDATA%\MultiRouteNetwork\multiroute.db`; window preferences are stored
-alongside it. Usage covers traffic observed through the engine, not historical
-Windows traffic from before installation. Adapter counters and per-application
-payload totals measure different layers and need not match exactly.
+The [user and technical guide](docs/USER-GUIDE.md) explains graph scales, connection pinning, data caps, DNS scope and performance evidence. [DEVELOPING.md](docs/DEVELOPING.md) covers the implementation and platform details.
 
-If upgrading from a legacy `net-merge` state directory, back it up first. Local
-state recovery performed during development is not a universal automatic migration.
-If the application list appears empty after a rename, preserve both state directories
-before attempting recovery.
+---
 
-Per-app DNS only covers ordinary TCP/UDP port 53 traffic routed through the engine.
-Encrypted DNS, application-owned resolvers and Windows resolver traffic outside
-that path are not covered. One connection remains on one adapter; existing flows
-do not migrate automatically when you edit a rule.
+## Prerequisites
 
-Automatic updates are not implemented as an active installation channel. The
-Settings controls are placeholders until a signed release channel is available.
-Any future update installation must happen while routing is stopped.
+For the Windows release:
 
-The dashboard adapts to the space remaining beside Settings or an application
-panel. Adapter cards move onto additional rows; narrow application rows stack
-identity, labeled download/upload bars and usage totals. The dashboard and panel
-scroll independently so controls remain reachable in smaller windows.
+- **Windows x64** with Microsoft WebView2 installed.
+- Administrator approval when starting the routing engine.
+- One or more eligible network adapters. Multiple independent upstreams are needed to combine independent internet capacity.
 
-## Build and verify
+To build from source:
 
-Requires Go as specified in `go.mod`, Node/npm for the frontend, Windows for the
-desktop package and WebView2 on the machine running it. From the repository root:
+- **Go** matching `go.mod` and **Node.js 22 with npm**, as used in CI.
+- PowerShell on Windows for desktop packaging.
+- Network access for dependencies and the verified Wintun download on the first package build.
+
+---
+
+## Local setup
+
+### 1. Download and run
+
+Download the Windows ZIP from [Releases](https://github.com/aristache-labs/MultiRouteNetwork/releases/latest), extract the complete folder, and launch **MultiRoute.exe**. Keep both executables, `wintun.dll` and the accompanying license files together. The portable package does not need an installer.
+
+Click **Start** and approve the engine elevation prompt. Add applications with **+ Add app**, then choose their adapter policy. Unsigned builds may receive Windows trust or antivirus prompts.
+
+**Stop** closes routed flows and removes capture routes while retaining the prepared device for faster resume. **Hide** leaves the current routing state active. **Exit** stops and closes both GUI and engine. Interrupted applications may need to reconnect.
+
+### 2. Clone and install
 
 ```powershell
-# Run tests without starting the GUI.
-go test ./...
-go test -race ./internal/tun ./internal/control ./internal/rules ./internal/engine
-go vet ./...
+git clone https://github.com/aristache-labs/MultiRouteNetwork.git
+cd MultiRouteNetwork
+go mod download
+npm ci --prefix desktop/frontend
+```
 
-# Build frontend and package GUI/engine; does not launch them.
+No API keys, external database or `.env` file are required for the desktop package. Saved rules and statistics remain in the local state directory; updating the application does not require deleting it.
+
+### 3. Build the desktop package
+
+```powershell
 .\scripts\package-desktop.ps1
 ```
 
-`VERSION` records the current source milestone. The desktop packaging script reads
-it by default and accepts `-Version X.Y.Z` to override the engine build stamp.
-`MultiRouteNetwork.exe version` reports the engine version. Generic builds also
-have a matching source default; tagged builds can override it with `-X main.version=...`.
+This builds frontend assets and writes `MultiRoute.exe`, `MultiRouteNetwork.exe`, Wintun and package notices to `dist/multiroute`. It reads `VERSION`, currently **0.4.9**, and does not launch the GUI or install over an existing copy.
 
-For manual builds:
+### 4. Verify locally
+
+Build the embedded frontend before Go checks on a fresh checkout:
 
 ```powershell
-Push-Location desktop/frontend
-npm ci
-npm run build
-Pop-Location
-
-go build -ldflags "-H=windowsgui -X main.version=0.4.8" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
-go build -o dist/multiroute/MultiRoute.exe ./desktop
+npm run build --prefix desktop/frontend
+go vet ./...
+go test ./...
+go test -race ./desktop ./internal/control ./internal/rules ./internal/engine
+node --experimental-strip-types --test desktop/frontend/tests/speed-scale.test.ts desktop/frontend/tests/traffic-order.test.ts desktop/frontend/tests/graph-smoothing.test.ts
 ```
 
-The separate legacy installer/tray script, `scripts/build.ps1`, reads `VERSION`
-by default too. It recreates `dist` and requires Inno Setup; use the desktop
-packaging script for the Wails package. Building does not publish a release or
-replace an installed application. Keep license files with redistributed binaries.
+Offline layout and graph checks require Playwright installed separately. They use mocked APIs, do not open the native GUI, and do not run real network transfers:
 
-Linux/macOS engine build and packaging details remain in
-[DEVELOPING.md](docs/DEVELOPING.md). Package-host and Homebrew publishing must be
-configured for this fork rather than inferred from the inherited changelog.
-
-## Diagnostics and performance
-
-Identified curl flows write bounded, rotating `curl-routing.jsonl` records in the
-state directory. They include selection reasons, opened adapters, byte counts,
-rates and close states. Selection attempts alone do not prove successful routing.
-The log excludes URLs, payloads, addresses and executable paths.
-
-`scripts/compare-downloads.ps1` compares direct and engine downloads with equal
-stream counts and physical-counter checks. It asks you to control routing/rules
-and does not start the GUI. Downloads consume real bandwidth; see the script's
-parameters and [diagnostic documentation](docs/DEVELOPING.md) before running it.
-
-The engine supports a **loopback-only** Go profiler through `-pprof`. Windows
-telemetry caches adapter identity metadata for three seconds while refreshing
-traffic counters every 70 ms. Windows packet IO reuses buffers without changing
-the scheduler or packet ownership guarantees.
-
-Local validation after buffer reuse measured approximately **94% fewer sampled
-allocated bytes**. Eight alternating Ethernet A/B runs measured **19% lower mean
-CPU per transferred GiB**. Throughput averaged 733 Mbit/s with reuse versus
-691 Mbit/s without; only four pairs against an external server were measured,
-so this is not a guaranteed speedup or proof that smaller regressions are impossible.
-CPU normalization uses interpolated connection counters. Repeated A/B comparison
-was performed without CPU profiling active; allocation measurements came from
-separate captures. Do not treat cumulative allocations as resident RAM.
-
-## Engine commands
-
-```text
-MultiRouteNetwork run -hidden     headless elevated engine used by the Windows desktop
-MultiRouteNetwork tray            legacy tray application
-MultiRouteNetwork on | off        start / pause the running engine
-MultiRouteNetwork quit            stop and exit the engine
-MultiRouteNetwork status | list   status and adapter information
-MultiRouteNetwork limit           inspect saved legacy adapter caps
-MultiRouteNetwork socks           SOCKS5 proxy, default 127.0.0.1:1080
-MultiRouteNetwork cleanup         remove leftover capture routes after a failure
-MultiRouteNetwork version         engine build version
+```powershell
+$env:PLAYWRIGHT_MODULE = 'C:/path/to/node_modules/playwright'
+node desktop/frontend/tests/responsive-layout.cjs
+node desktop/frontend/tests/header-rate-layout.cjs
+node desktop/frontend/tests/spark-motion.cjs
+node desktop/frontend/tests/spark-startup.cjs
 ```
 
-Use the desktop startup settings for the Wails application; legacy tray autostart
-commands configure a different launch path. Advanced flags, platform setup and
-profiling instructions are in [DEVELOPING.md](docs/DEVELOPING.md).
+---
 
-## Project and support
+## Commands
 
-- Repository and issues: [aristache-labs/MultiRouteNetwork](https://github.com/aristache-labs/MultiRouteNetwork).
-- Changes: [CHANGELOG.md](CHANGELOG.md); versions are published only when explicitly tagged/released.
-- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
-- License: [MIT](LICENSE). Dependencies and driver terms: [third-party notices](THIRD-PARTY-NOTICES.md).
-- Support development: [buymeacoffee.com/aristache](https://buymeacoffee.com/aristache).
+| Command | Purpose |
+| --- | --- |
+| `npm ci --prefix desktop/frontend` | Install locked frontend dependencies |
+| `npm run build --prefix desktop/frontend` | Type-check and build embedded frontend assets |
+| `go vet ./...` | Check Go packages after frontend build |
+| `go test ./...` | Run Go tests without launching the GUI |
+| `.\scripts\package-desktop.ps1` | Build the Windows desktop package |
+| `MultiRouteNetwork.exe version` | Show the engine build version |
+| `MultiRouteNetwork.exe status` | Inspect the running engine |
+| `MultiRouteNetwork.exe run -hidden` | Run the headless engine used by the desktop |
+| `MultiRouteNetwork.exe cleanup` | Remove leftover capture routes after a failure |
+
+Legacy tray, SOCKS5 and other engine commands are documented in the [guide](docs/USER-GUIDE.md#engine-commands). The legacy installer script recreates `dist`; use `package-desktop.ps1` for the Wails application.
+
+---
+
+## Settings and app rules
+
+- **Program matching** — choose an executable name, such as `chrome.exe`, or its full executable path. Exact-path rules take priority.
+- **Connect through** — all eligible adapters, one adapter, or several selected adapters. Fallback can wait, use other adapters, use the default or use selected backups.
+- **Speed limits** — app-wide limits constrain combined app traffic. A 10 Mbit/s limit on each of three adapters can allow approximately 30 Mbit/s together; adapter limits are not one shared global cap.
+- **Data caps** — daily/monthly download-plus-upload allowance, with an 80% warning. Removing a cap clears its block; increasing it rechecks usage without restarting the engine. Closed connections must reconnect.
+- **DNS** — Windows default, Cloudflare, Google, Quad9 or custom plain DNS. Only routed TCP/UDP port 53 traffic is covered; encrypted DNS and application-owned resolvers can bypass that scope.
+- **Startup** — Start with Windows and Start routing when it opens are separate options.
+- **Closing the window** — ask each time, hide to tray, or exit; the prompt can remember your choice.
+- **Updates** — automatic installation remains disabled; the Settings controls are placeholders.
+
+Rules can be edited while routing is stopped. Routing changes affect new connections; existing connections do not migrate to another adapter.
+
+---
+
+## Deployment
+
+Windows releases are built and published by [GitHub Actions](https://github.com/aristache-labs/MultiRouteNetwork/actions/workflows/release.yml) from a tag such as **`v0.4.9`**.
+
+1. Synchronize `VERSION`, engine fallback, frontend package/lock versions and `CHANGELOG.md`.
+2. Build and test locally, commit the intended source and push the commit.
+3. Push the matching `vX.Y.Z` tag. The workflow validates versions, builds the package and runs Go checks.
+4. Both executables must identify the tagged commit with `vcs.modified=false` before the ZIP is published.
+5. The release contains a versioned Windows ZIP and the `MultiRoute-windows.zip` alias. The manual `verify-repos` workflow checks its required files and engine version without opening the GUI.
+
+The release is portable Windows x64, not the inherited tray installer. Automatic in-app updating is not enabled. CI compilation on other platforms does not publish Linux/macOS desktop packages. Versions 0.4.0–0.4.5 remain retrospective source milestones, not invented historical releases.
+
+---
+
+## Contributing
+
+Fork, branch and open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for project checks and [Issues](https://github.com/aristache-labs/MultiRouteNetwork/issues) for bugs or ideas. Report vulnerabilities following [SECURITY.md](SECURITY.md).
+
+Include the application/engine version and reproduction steps. Preserve existing rules and usage data, and distinguish mocked/browser verification from native desktop testing.
+
+## Contributors
+
+Thanks to everyone contributing to MultiRouteNetwork and its upstream foundations.
+
+<a href="https://github.com/aristache-labs/MultiRouteNetwork/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=aristache-labs/MultiRouteNetwork" alt="MultiRouteNetwork contributors" />
+</a>
+
+## License
+
+Licensed under **MIT**. See [LICENSE](LICENSE). The project retains the upstream net-merge copyright and notices. Wintun and other dependencies have their own terms; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and keep the supplied license files with redistributed binaries.
+
+## Support the project
+
+MultiRouteNetwork is free and open source. If it helps your workflow, you can [support development on Buy Me a Coffee](https://buymeacoffee.com/aristache), report issues or contribute improvements.
+
+## Connect
+
+<div align="center">
+
+**Adrian Cristache** · [aristache.dev](https://www.aristache.dev)
+
+<a href="https://github.com/aristache-labs"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" /></a>
+<a href="https://www.aristache.dev"><img src="https://img.shields.io/badge/Site-0f6e68?style=for-the-badge&logo=googlechrome&logoColor=white" alt="aristache.dev" /></a>
+
+</div>

@@ -5,6 +5,10 @@
   --bg: #111111;
   --surface: #1f1f1f;
   --button: #272727;
+  --available-bg: #444444;
+  --available-text: #aaaaaa;
+  --make-default-bg: #303030;
+  --make-default-text: #929292;
   --input: #262626;
   --border: #3a3a3a;
   --divider: #333333;
@@ -25,6 +29,10 @@
   --bg: #f5f5f5;
   --surface: #ffffff;
   --button: #eeeeee;
+  --available-bg: #eeeeee;
+  --available-text: #686868;
+  --make-default-bg: #eeeeee;
+  --make-default-text: #686868;
   --input: #f6f6f6;
   --border: #d3d3d3;
   --divider: #dddddd;
@@ -93,16 +101,6 @@ button.icon-button {
   width: 20px;
   height: 20px;
   flex: none;
-}
-.icon-play,
-.icon-stop,
-.icon-moon {
-  fill: currentColor;
-  stroke: none;
-}
-.icon-settings {
-  fill: currentColor;
-  stroke: var(--button);
 }
 .down {
   color: var(--download);
@@ -303,12 +301,12 @@ h2 {
   color: var(--cyan);
 }
 .badge.available {
-  background: #444;
-  color: #aaa;
+  background: var(--available-bg);
+  color: var(--available-text);
 }
 .badge.make-default {
-  background: #303030;
-  color: #929292;
+  background: var(--make-default-bg);
+  color: var(--make-default-text);
   font-size: 14px;
 }
 .badge.default {
@@ -1263,4 +1261,21 @@ button.close-option {
   .header-speeds {
     min-width: 0;
   }
+}
+
+/* Inline traffic symbols inherit their value's colour. */
+.icon-download,
+.icon-upload {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  vertical-align: -3px;
+  margin-right: 5px;
+}
+.data-breakdown .icon-upload {
+  margin-left: 12px;
+}
+.limit-pair .icon-download,
+.limit-pair .icon-upload {
+  margin-right: 0;
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/events"
 
 	"MultiRouteNetwork/internal/control"
+	"MultiRouteNetwork/internal/icon"
 )
 
 //go:embed frontend/dist
@@ -26,6 +27,7 @@ func main() {
 	}
 	app := application.New(application.Options{
 		Name:        "MultiRoute",
+		Icon:        icon.AppPNG(64),
 		Description: "Choose which network adapter each app uses",
 		Services: []application.Service{
 			application.NewServiceWithOptions(api, application.ServiceOptions{Route: "/api"}),
@@ -71,18 +73,7 @@ func main() {
 		event.Cancel()
 		go api.window.requestClose()
 	})
-	menu := app.NewMenu()
-	menu.Add("Show").OnClick(func(*application.Context) { window.Show() })
-	menu.Add("Exit").OnClick(func(*application.Context) {
-		go func() {
-			if err := quit(); err != nil {
-				api.window.prompt(err.Error())
-			}
-		}()
-	})
-	tray := app.SystemTray.New()
-	tray.SetMenu(menu)
-	tray.SetTooltip("MultiRoute")
+	installDesktopTray(app, api, func() { window.Show() }, quit)
 	if control.LocalStatus(api.dir()).Settings.StartRouting {
 		go func() { _ = api.startRouting() }()
 	}

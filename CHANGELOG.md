@@ -1,7 +1,7 @@
 # Changelog
 
 Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
-Current source version: **0.4.8**. See [README.md](README.md) for current behavior and limitations.
+Current source version: **0.4.9**. See [README.md](README.md) for current behavior and limitations.
 
 Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
 work that accumulated after 0.3.7. Their dates record this documentation milestone,
@@ -11,6 +11,23 @@ references there to package hosts, upstream products or release availability are
 historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
+
+## [0.4.9] - 2026-11-10
+
+### Changed
+- Restructured the README with a centered product header, badges, screenshots, demo, setup, architecture and release guidance.
+- Preserved detailed routing, graph, limits and diagnostic documentation in a separate user guide.
+- Applied the MultiRoute application icon to the native window instead of the generic Windows icon.
+- Updated Start, Stop, Usage, theme, Settings, Save and Delete buttons with the supplied outline SVG icons.
+- Replaced GUI download/upload text arrows with the supplied inline SVG icons, retaining directional colours.
+
+### Added
+- Expanded the desktop tray menu with live total/adapter rates, Online/Offline status, Start/Stop, window restoration and Exit.
+- Added a compact live tooltip and online/offline tray icons; refreshed tray statistics once per second.
+
+### Fixed
+- Allowed repeated desktop packaging to overwrite the read-only go-winio license copied from the Go module cache.
+- Matched the Make default button and Available badge backgrounds and text to the light theme while preserving dark-theme styling.
 
 ## [0.4.8] - 2026-11-10
 

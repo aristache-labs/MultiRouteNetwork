@@ -25,7 +25,7 @@ if ($LASTEXITCODE -ne 0) { throw "MultiRoute desktop build failed" }
 
 $winioModule = go list -m -f '{{.Dir}}' github.com/Microsoft/go-winio
 if ($LASTEXITCODE -ne 0) { throw "Could not locate go-winio license" }
-Copy-Item -LiteralPath (Join-Path $winioModule "LICENSE") -Destination (Join-Path $OutDir "go-winio-LICENSE.txt")
+Copy-Item -LiteralPath (Join-Path $winioModule "LICENSE") -Destination (Join-Path $OutDir "go-winio-LICENSE.txt") -Force
 
 $wintun = Join-Path $OutDir "wintun.dll"
 if (-not (Test-Path $wintun)) {

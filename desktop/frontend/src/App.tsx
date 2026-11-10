@@ -48,7 +48,7 @@ function fmt(s: number = 0) {
 }
 function Icon({ name }: any) {
   const _: any = {
-    usage: <path d="m3 17 6-7 5 4 7-9" />,
+    usage: <><path d="M12 17v4"/><path d="M18 10h-2.315a1 1 0 00-.932.64l-.787 2.034a.5.5 0 01-.932 0l-2.068-5.348a.5.5 0 00-.932 0l-.787 2.035a1 1 0 01-.932.639H6"/><path d="M8 21h8"/><rect x="2" y="3" width="20" height="14" rx="2"/></>,
     overview: (
       <>
         <rect x="3" y="3" width="7" height="7" />
@@ -57,35 +57,29 @@ function Icon({ name }: any) {
         <rect x="14" y="14" width="7" height="7" />
       </>
     ),
-    settings: (
-      <>
-        <path d="m10 3-1 3-3 1-3 3 2 2-1 4 3 1 2 4 3-1 3 1 2-4 3-1-1-4 2-2-3-3-3-1-1-3Z" />
-        <circle cx="12" cy="12" r="3" />
-      </>
-    ),
-    moon: <path d="M9 3a9 9 0 1 1 0 18A10 10 0 0 0 9 3Z" />,
-    sun: (
-      <>
-        <circle cx="12" cy="12" r="4" />
-        <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2" />
-      </>
-    ),
-    play: <path d="m7 4 13 8-13 8Z" />,
-    stop: <rect x="6" y="6" width="12" height="12" />,
+    settings: <><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></>,
+    moon: <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>,
+    play: <><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></>,
+    stop: <><path d="M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z"/><path d="M8 12h8"/></>,
     plus: <path d="M12 4v16M4 12h16" />,
     close: <path d="m5 5 14 14M5 19 19 5" />,
-    trash: (
+    trash: <><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+    save: <><path d="M12.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10.2a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4v4.35"/><path d="m16 19 2 2 4-4"/><path d="M17 15.13V14a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></>,
+    download: (
       <>
-        <path d="M4 6h16M9 6V3h6v3M7 6l1 15h8l1-15" />
+        <path d="M12 15V3" />
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <path d="m7 10 5 5 5-5" />
       </>
     ),
-    save: (
+    upload: (
       <>
-        <path d="M4 3h13l3 3v15H4Z" />
-        <path d="M8 3v6h8V3M8 21v-8h8v8" />
+        <path d="M12 3v12" />
+        <path d="m17 8-5-5-5 5" />
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       </>
     ),
-    download: <path d="M12 3v12m-5-5 5 5 5-5M4 20h16" />,
     app: (
       <>
         <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -99,7 +93,7 @@ function Icon({ name }: any) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -368,11 +362,11 @@ export function App() {
         </div>
         <div className="header-speeds">
           <span className="down">
-            {"↓ "}
+            <Icon name="download" />
             {<SmoothRate bps={status == null ? void 0 : status.downBps} />}
           </span>
           <span className="up">
-            {"↑ "}
+            <Icon name="upload" />
             {<SmoothRate bps={status == null ? void 0 : status.upBps} />}
           </span>
         </div>
@@ -659,11 +653,11 @@ export function App() {
               </div>
               <div className="usage-summary">
                 <span className="down">
-                  {"↓ "}
+                  <Icon name="download" />
                   {bytes(usage.reduce((N: any, z: any) => N + z.down, 0))}
                 </span>
                 <span className="up">
-                  {"↑ "}
+                  <Icon name="upload" />
                   {bytes(usage.reduce((N: any, z: any) => N + z.up, 0))}
                 </span>
                 <span className="muted">
@@ -821,11 +815,11 @@ function AdapterCard({ card, running, onDefault }: any) {
       </header>
       <div className="rates">
         <span className="down">
-          {"↓ "}
+          <Icon name="download" />
           {<SmoothRate bps={card.downBps} />}
         </span>
         <span className="up">
-          {"↑ "}
+          <Icon name="upload" />
           {<SmoothRate bps={card.upBps} />}
         </span>
       </div>
@@ -836,22 +830,22 @@ function AdapterCard({ card, running, onDefault }: any) {
         <p>
           {"Today "}
           <span>
-            {"↓ "}
+            <Icon name="download" />
             {bytes(card.todayDown)}
           </span>
           <span>
-            {"↑ "}
+            <Icon name="upload" />
             {bytes(card.todayUp)}
           </span>
         </p>
         <p>
           {"Month "}
           <span>
-            {"↓ "}
+            <Icon name="download" />
             {bytes(card.monthDown)}
           </span>
           <span>
-            {"↑ "}
+            <Icon name="upload" />
             {bytes(card.monthUp)}
           </span>
         </p>
@@ -971,23 +965,23 @@ function RuleForm({
               <dl className="data-breakdown">
                 <dt>{"Today"}</dt>
                 <dd>
-                  {"↓ "}
+                  <Icon name="download" />
                   {bytes(today == null ? void 0 : today.down)}
-                  {"　↑ "}
+                  <> <Icon name="upload" /></>
                   {bytes(today == null ? void 0 : today.up)}
                 </dd>
                 <dt>{"This month"}</dt>
                 <dd>
-                  {"↓ "}
+                  <Icon name="download" />
                   {bytes(month == null ? void 0 : month.down)}
-                  {"　↑ "}
+                  <> <Icon name="upload" /></>
                   {bytes(month == null ? void 0 : month.up)}
                 </dd>
                 <dt>{"This session"}</dt>
                 <dd>
-                  {"↓ "}
+                  <Icon name="download" />
                   {bytes(row == null ? void 0 : row.downBytes)}
-                  {"　↑ "}
+                  <> <Icon name="upload" /></>
                   {bytes(row == null ? void 0 : row.upBytes)}
                 </dd>
               </dl>
@@ -1001,9 +995,9 @@ function RuleForm({
                       <dd>
                         {today.byNicDown && today.byNicUp ? (
                           <>
-                            {"↓ "}
+                            <Icon name="download" />
                             {bytes(today.byNicDown[O])}
-                            {"　↑"} {bytes(today.byNicUp[O])}
+                            <> <Icon name="upload" /></> {bytes(today.byNicUp[O])}
                           </>
                         ) : (
                           bytes(rl)
@@ -1291,7 +1285,7 @@ function RuleForm({
                     value={
                       (rl = draft.adapterDown) == null ? void 0 : rl[O.name]
                     }
-                    unit="↓"
+                    unit={<Icon name="download" />}
                     placeholder="no limit"
                     onChange={(Ll: any) =>
                       g({
@@ -1305,7 +1299,7 @@ function RuleForm({
                   <Amount
                     label={`${O.name} upload limit`}
                     value={(Ul = draft.adapterUp) == null ? void 0 : Ul[O.name]}
-                    unit="↑"
+                    unit={<Icon name="upload" />}
                     placeholder="no limit"
                     onChange={(Ll: any) =>
                       g({
@@ -1529,7 +1523,7 @@ function SettingsPanel({
                   <Amount
                     label={`${adapter.name} total download limit`}
                     value={adapterDown[adapter.name] || undefined}
-                    unit="↓"
+                    unit={<Icon name="download" />}
                     placeholder="no limit"
                     onChange={(value: number | undefined) =>
                       setAdapterDown({
@@ -1541,7 +1535,7 @@ function SettingsPanel({
                   <Amount
                     label={`${adapter.name} total upload limit`}
                     value={adapterUp[adapter.name] || undefined}
-                    unit="↑"
+                    unit={<Icon name="upload" />}
                     placeholder="no limit"
                     onChange={(value: number | undefined) =>
                       setAdapterUp({ ...adapterUp, [adapter.name]: value ?? 0 })
@@ -1561,7 +1555,7 @@ function SettingsPanel({
           </button>
           <p className="muted">
             Limits traffic routed by MultiRoute through each adapter, for all
-            apps together. ↓ download, ↑ upload. Leave a box empty for no limit.
+            apps together. <Icon name="download" /> download, <Icon name="upload" /> upload. Leave a box empty for no limit.
             Per-app limits also apply.
           </p>
         </Section>
