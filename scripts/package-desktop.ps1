@@ -20,7 +20,7 @@ if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRouteNetwork.exe") .\cmd\MultiRouteNetwork
 if ($LASTEXITCODE -ne 0) { throw "MultiRouteNetwork engine build failed" }
-go build -o (Join-Path $OutDir "MultiRoute.exe") .\desktop
+go build -ldflags "-H=windowsgui -X main.version=$Version" -o (Join-Path $OutDir "MultiRoute.exe") .\desktop
 if ($LASTEXITCODE -ne 0) { throw "MultiRoute desktop build failed" }
 
 $winioModule = go list -m -f '{{.Dir}}' github.com/Microsoft/go-winio
@@ -35,6 +35,7 @@ if (-not (Test-Path $wintun)) {
 @(
     "MultiRoute $Version",
     "Built from the MIT MultiRouteNetwork engine. Third-party notices stay in the repository.",
+    "MultiRoute.exe opens the window and does not open a command prompt.",
     "WebView2 must be installed (current Windows 11 includes it).",
     "Automatic updates are disabled until a signed release channel exists.",
     "Install an update only while routing is stopped."

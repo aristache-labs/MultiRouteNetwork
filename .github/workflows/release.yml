@@ -91,11 +91,29 @@ jobs:
           Copy-Item -LiteralPath LICENSE -Destination (Join-Path $stage 'LICENSE')
           Copy-Item -LiteralPath THIRD-PARTY-NOTICES.md -Destination (Join-Path $stage 'THIRD-PARTY-NOTICES.md')
           Compress-Archive -Path $stage -DestinationPath "dist\$stageName.zip"
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -eq 3010) { exit 0 }
+          exit $LASTEXITCODE
+      - name: Build the Windows installer
+        shell: pwsh
+        run: |
+          $version = '${{ needs.validate.outputs.version }}'
+          $iscc = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $iscc) { throw 'ISCC.exe not found' }
+          & $iscc "/DVersion=$version" 'installer\MultiRoute.iss'
+          if ($LASTEXITCODE -ne 0) { throw "installer failed (exit $LASTEXITCODE)" }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-desktop
           path: |
             dist/MultiRoute-${{ needs.validate.outputs.version }}-windows.zip
+            dist/MultiRoute-${{ needs.validate.outputs.version }}-windows-setup.exe
             dist/release-notes.md
 
   linux:
@@ -238,10 +256,11 @@ jobs:
           notes=$(find dist -name release-notes.md -print -quit)
           test -n "$notes"
           test -f "dist/MultiRoute-$version-windows.zip"
+          test -f "dist/MultiRoute-$version-windows-setup.exe"
           test -f "dist/MultiRoute-$version-linux-amd64.deb"
           test -f "dist/MultiRoute-$version-macos-arm64.dmg"
           test -f "dist/MultiRoute-$version-macos-amd64.dmg"
-          files=$(find dist -type f \( -name '*.zip' -o -name '*.deb' -o -name '*.dmg' \))
+          files=$(find dist -type f \( -name '*.zip' -o -name '*.exe' -o -name '*.deb' -o -name '*.dmg' \))
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" $files --clobber
             if [ "$CHANNEL" = prerelease ]; then
