@@ -1,7 +1,7 @@
 # Changelog
 
 Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
-Current source version: **0.4.6**. See [README.md](README.md) for current behavior and limitations.
+Current source version: **0.4.7**. See [README.md](README.md) for current behavior and limitations.
 
 Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
 work that accumulated after 0.3.7. Their dates record this documentation milestone,
@@ -11,6 +11,19 @@ references there to package hosts, upstream products or release availability are
 historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
+
+## [0.4.7] - 2026-11-10
+
+### Changed
+- Added green/red status dots beside application names with Running and Not running labels; kept unknown states neutral.
+- Replaced header Running/Stopped labels with Online/Offline and green/red indicators; retained the transitional Starting state.
+
+### Fixed
+- Kept running applications above stopped applications, including at zero traffic, while preserving stable traffic ordering within each group.
+- Applied process-state priority immediately when applications start or stop, independently of the traffic ranking interval.
+
+### Added
+- Added regression tests for process-state priority, zero-traffic ordering and traffic ranking within the running group.
 
 ## [0.4.6] - 2026-11-10
 

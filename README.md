@@ -17,7 +17,7 @@
   <a href="https://buymeacoffee.com/aristache">Buy me a coffee</a>
 </p>
 
-**Current source version: 0.4.6.** The Windows desktop application is **MultiRoute**;
+**Current source version: 0.4.7.** The Windows desktop application is **MultiRoute**;
 its engine, Go module and repository are **MultiRouteNetwork**. The project builds
 on the MIT-licensed net-merge engine. Copyright and third-party notices remain applicable.
 
@@ -118,7 +118,9 @@ a separate setting; enabling one does not imply enabling the other.
 
 ## Rates, graphs and limits
 
-Overview applications are ordered by combined download/upload activity averaged
+Overview lists running applications first and confirmed stopped applications last,
+with unknown process states in between. Within each group, applications are ordered
+by combined download/upload activity averaged
 with a two-second response time. Ranking updates once per second; a row passes
 another only with a lead above both 20% and 16 KB/s (128 kbit/s). Quiet traffic
 and near-equal rates retain their existing order.
@@ -209,7 +211,7 @@ npm ci
 npm run build
 Pop-Location
 
-go build -ldflags "-H=windowsgui -X main.version=0.4.6" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=0.4.7" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
 go build -o dist/multiroute/MultiRoute.exe ./desktop
 ```
 

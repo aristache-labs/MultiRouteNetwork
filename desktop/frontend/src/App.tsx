@@ -349,13 +349,14 @@ export function App() {
             <h1>{"MultiRoute"}</h1>
             <div className="run-state">
               <i
-                className={status != null && status.running ? "dot on" : "dot"}
+                className={starting ? "dot" : status?.running ? "dot on" : "dot off"}
+                aria-hidden="true"
               />
               {starting
                 ? "Starting…"
                 : status != null && status.running
-                  ? "Running"
-                  : "Stopped"}
+                  ? "Online"
+                  : "Offline"}
             </div>
           </div>
         </div>
@@ -546,13 +547,14 @@ export function App() {
                                   {N.exe}
                                 </button>
                                 <span
-                                  className={`app-process-state ${N.running ? "is-running" : ""}`}
+                                  className={`app-process-state ${N.runningKnown ? N.running ? "is-running" : "is-stopped" : "is-unknown"}`}
                                 >
+                                  <span className="app-process-dot" aria-hidden="true" />
                                   {N.runningKnown
                                     ? N.running
-                                      ? "running"
-                                      : "not running"
-                                    : "status unavailable"}
+                                      ? "Running"
+                                      : "Not running"
+                                    : "Status unavailable"}
                                 </span>
                               </div>
                               <div className="route-meta">

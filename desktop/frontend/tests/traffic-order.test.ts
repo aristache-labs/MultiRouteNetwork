@@ -18,3 +18,18 @@ test("clear sustained combined traffic rises, brief spikes do not shuffle rows",
  assert.deepEqual(order.sort([app('A',0)],7000).map(a=>a.exe),['A']);
  assert.deepEqual(order.sort([],8000),[]);
 });
+
+test("running apps outrank stopped apps immediately, even at zero traffic", () => {
+ const order=new TrafficOrder();
+ const row=(name:string,running:boolean,rate=0)=>({...app(name,rate),runningKnown:true,running});
+ assert.deepEqual(order.sort([row('A',false,1000000),row('B',true)],0).map(a=>a.exe),['B','A']);
+ assert.deepEqual(order.sort([row('A',true),row('B',false)],70).map(a=>a.exe),['A','B']);
+ for(let t=140;t<3000;t+=70) {
+  assert.deepEqual(order.sort([row('A',true),row('B',false,100000000)],t).map(a=>a.exe),['A','B']);
+ }
+});
+test("traffic ordering still works inside the running group", () => {
+ const order=new TrafficOrder();
+ const rows=[{...app('A',0),runningKnown:true,running:true},{...app('B',1000000),runningKnown:true,running:true},{...app('C',100000000),runningKnown:true,running:false}];
+ assert.deepEqual(order.sort(rows,0).map(a=>a.exe),['B','A','C']);
+});

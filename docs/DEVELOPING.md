@@ -178,7 +178,7 @@ scripts\fetch-wintun.ps1 -OutDir .
 ```
 
 Releases are built by GitHub Actions when a `vX.Y.Z` tag is pushed (`.github/workflows/release.yml`).
-`VERSION` records the current source version (0.4.6). Both Windows build scripts
+`VERSION` records the current source version (0.4.7). Both Windows build scripts
 read it when `-Version` is omitted; desktop packaging stamps the engine with
 `-X main.version=...`. The frontend package metadata and the engine source fallback
 must match `VERSION`. The 0.4.0–0.4.5 changelog sections are retrospective milestones,

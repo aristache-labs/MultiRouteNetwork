@@ -179,7 +179,10 @@ h2 {
   background: var(--subtle);
 }
 .dot.on {
-  background: var(--cyan);
+  background: #39b86b;
+}
+.dot.off {
+  background: #e45b5b;
 }
 .header-spark {
   width: 240px;
@@ -1086,8 +1089,24 @@ button.close-option {
   color: var(--muted);
   flex: none;
 }
-.app-process-state.is-running {
-  color: var(--cyan);
+.app-process-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.app-process-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--subtle);
+}
+.app-process-state.is-running .app-process-dot {
+  background: #39b86b;
+}
+.app-process-state.is-stopped .app-process-dot {
+  background: #e45b5b;
 }
 
 .adapter-limit-fields {
