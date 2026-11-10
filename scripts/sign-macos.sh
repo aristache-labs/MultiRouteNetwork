@@ -40,12 +40,24 @@ rm -f "$pem"
 unset MR_P12_PASS
 test "${status:-0}" -eq 0
 security create-keychain -p multiroute "$keychain"
+security set-keychain-settings -lut 21600 "$keychain"
 security unlock-keychain -p multiroute "$keychain"
-security import "$cert" -k "$keychain" -P "$p12pass" -f pkcs12 -T /usr/bin/codesign
-security set-key-partition-list -S apple-tool:,apple: -s -k multiroute "$keychain" >/dev/null
-identity=$(security find-identity -v -p codesigning "$keychain" | awk -F\" 'NR==1 {print $2}')
-test -n "$identity"
-sign() { codesign --force --options runtime --timestamp --sign "$identity" --keychain "$keychain" "$1"; }
+# codesign ignores a keychain that is not on the user search list.
+security list-keychains -d user -s "$keychain"
+security default-keychain -s "$keychain"
+security import "$cert" -k "$keychain" -P "$p12pass" -f pkcs12 -A -T /usr/bin/codesign -T /usr/bin/security
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k multiroute "$keychain" >/dev/null
+security unlock-keychain -p multiroute "$keychain"
+identity_line=$(security find-identity -v -p codesigning "$keychain" | sed -n 's/^[[:space:]]*[0-9][0-9]*) //p' | head -n 1)
+hash=$(printf '%s\n' "$identity_line" | awk '{print $1}')
+identity=$(printf '%s\n' "$identity_line" | awk -F'"' '{print $2}')
+if ! printf '%s' "$hash" | grep -Eq '^[0-9A-F]{40}$'; then
+  echo "no codesigning identity in the temporary keychain" >&2
+  security find-identity -v -p codesigning "$keychain" >&2 || true
+  exit 1
+fi
+echo "signing identity $identity"
+sign() { codesign --force --keychain "$keychain" --options runtime --timestamp --sign "$hash" "$1"; }
 sign "$app/Contents/MacOS/MultiRouteNetwork"
 sign "$app/Contents/MacOS/MultiRoute"
 sign "$app"
