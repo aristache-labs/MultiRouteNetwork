@@ -121,7 +121,7 @@ func shortServiceDir(t *testing.T) string {
 
 func dialMissing(t *testing.T) error {
 	t.Helper()
-	_, err := DialPath(filepath.Join(t.TempDir(), "absent"))
+	_, err := DialPath(filepath.Join(shortServiceDir(t), "absent"))
 	if err == nil {
 		t.Fatal("dialed a missing socket")
 	}
