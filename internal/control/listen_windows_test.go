@@ -11,9 +11,19 @@ import (
 	"MultiRouteNetwork/internal/engine"
 	"MultiRouteNetwork/internal/rules"
 	"MultiRouteNetwork/internal/store"
+	"golang.org/x/sys/windows"
 )
 
 func testPipePath() string { return fmt.Sprintf(`\\.\pipe\MultiRoute-test-%d`, time.Now().UnixNano()) }
+
+func TestServiceKindMissingPipe(t *testing.T) {
+	if got := ServiceKind(false, windows.ERROR_FILE_NOT_FOUND); got != ServiceUninstalled {
+		t.Fatal(got)
+	}
+	if got := ServiceKind(true, windows.ERROR_FILE_NOT_FOUND); got != ServiceStopped {
+		t.Fatal(got)
+	}
+}
 
 func TestMissingPipeIsNotReportedAsBusy(t *testing.T) {
 	_, err := dialPipe(testPipePath())

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dev.aristache.multiroute.daemon</string>
+  <key>AssociatedBundleIdentifiers</key>
+  <array>
+    <string>dev.aristache.multiroute</string>
+  </array>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Applications/MultiRoute.app/Contents/MacOS/MultiRouteNetwork</string>
+    <string>service</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>

@@ -6,3 +6,10 @@ result
 .DS_Store
 node_modules/
 diagnostics/
+
+# Apple signing material. The release reads these from GitHub Environment secrets.
+developer.key
+developer.csr
+developerID.cer
+developer-id.p12
+AuthKey_*.p8

@@ -1,6 +1,10 @@
 package control
 
-import "testing"
+import (
+	"testing"
+
+	"MultiRouteNetwork/internal/engine"
+)
 
 type closingSwitch struct {
 	testSwitch
@@ -8,6 +12,19 @@ type closingSwitch struct {
 }
 
 func (s *closingSwitch) Close() { s.closed = true }
+func TestQuitInServiceModeStopsRoutingAndReturns(t *testing.T) {
+	EnableStayResident()
+	t.Cleanup(func() { stayResident.Store(false) })
+	s := New("", nil)
+	sw := &testSwitch{}
+	sw.On()
+	s.Attach(engine.NewScheduler(nil), sw)
+	s.Quit()
+	if sw.IsOn() {
+		t.Fatal("service quit left routing on")
+	}
+}
+
 func TestShutdownClosesKeptDevice(t *testing.T) {
 	s := New("", nil)
 	sw := &closingSwitch{}

@@ -73,6 +73,7 @@ export type AppRow = {
 export type Status = {
   running: boolean;
   starting?: boolean;
+  service?: string;
   error?: string;
   theme: string;
   defaultAdapter: string;

@@ -6,6 +6,7 @@ import { api } from "./api";
 import { TrafficOrder } from "./traffic-order";
 import { speedScale } from "./speed-scale";
 import { CloseDialog, CloseBehaviorSettings } from "./CloseDialog";
+import { runStateLabel } from "./run-state";
 const emptyRule: () => Rule = () => ({
     id: "",
     exe: "",
@@ -346,11 +347,7 @@ export function App() {
                 className={starting ? "dot" : status?.running ? "dot on" : "dot off"}
                 aria-hidden="true"
               />
-              {starting
-                ? "Starting…"
-                : status != null && status.running
-                  ? "Online"
-                  : "Offline"}
+              {runStateLabel(status, starting)}
             </div>
           </div>
         </div>

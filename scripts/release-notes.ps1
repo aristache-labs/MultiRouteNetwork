@@ -11,10 +11,10 @@ $m = [regex]::Match($changelog, "(?ms)^## \[$([regex]::Escape($Version))\][^\r\n
 if (-not $m.Success -or -not $m.Groups[1].Value.Trim()) {
     throw "CHANGELOG.md has no entry for $Version. Add a '## [$Version] - <date>' section first."
 }
-$install = "**MultiRouteNetwork ${Version}:** see the [README](https://github.com/aristache-labs/MultiRouteNetwork#readme) " +
-    "for Windows desktop builds and engine setup. Use only matching assets actually attached to this release. " +
-    "The Windows desktop needs WebView2; routing requests administrator privileges. " +
-    "Build scripts do not publish an installer, configure a package repository or install updates automatically."
+$install = "**MultiRouteNetwork ${Version}:** see the [README](https://github.com/aristache-labs/MultiRouteNetwork#readme). " +
+    "Use only assets attached to this release. The Windows package is the supported desktop. " +
+    "Ubuntu and macOS packages in a prerelease are experimental and have not had a native visual check. " +
+    "The Windows desktop needs WebView2. Linux and macOS install a privileged service that does not route until Start."
 # UTF-8 without a BOM (Windows PowerShell's -Encoding utf8 adds one, which GitHub would show)
 $path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 $footer = "---`n[Report an issue](https://github.com/aristache-labs/MultiRouteNetwork/issues) · " +

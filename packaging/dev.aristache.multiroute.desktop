@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MultiRoute
+GenericName=Per-application routing
+Comment=Choose which network adapter each application uses
+Exec=MultiRoute
+Icon=MultiRouteNetwork
+Terminal=false
+Categories=Network;Utility;
+Keywords=network;routing;bandwidth;wifi;ethernet;
+StartupNotify=false

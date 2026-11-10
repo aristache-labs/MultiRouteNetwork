@@ -1,7 +1,7 @@
 name: release
-# Push a tag like v0.4.8 to build the Windows desktop zip and publish a GitHub release.
-# Notes come from that version's CHANGELOG.md section. This does not build the legacy
-# tray installer or publish Linux package repositories.
+# A version tag builds Windows, Ubuntu and macOS desktop packages.
+# packaging/release-channel selects prerelease or stable.
+# A prerelease does not replace the current Latest Windows release.
 on:
   push:
     tags: ['v*']
@@ -10,7 +10,33 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      channel: ${{ steps.version.outputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          set -eu
+          if ! printf '%s' "$GITHUB_REF_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Expected tag vX.Y.Z" >&2
+            exit 1
+          fi
+          version=${GITHUB_REF_NAME#v}
+          test "$(tr -d '[:space:]' < VERSION)" = "$version"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; const version='$version'; const pkg=JSON.parse(readFileSync('desktop/frontend/package.json','utf8')); const lock=JSON.parse(readFileSync('desktop/frontend/package-lock.json','utf8')); if (pkg.version!==version || lock.version!==version || lock.packages[''].version!==version) process.exit(1);"
+          channel=$(tr -d '[:space:]' < packaging/release-channel)
+          if [ "$channel" != prerelease ] && [ "$channel" != stable ]; then
+            echo "release channel must be prerelease or stable" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+
+  windows:
+    needs: validate
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,29 +48,17 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: desktop/frontend/package-lock.json
-      - name: Validate release version
-        shell: pwsh
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          if ($env:RELEASE_TAG -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Expected tag vX.Y.Z' }
-          $version = $Matches[1]
-          if ((Get-Content VERSION -Raw).Trim() -ne $version) { throw 'Tag does not match VERSION' }
-          $package = Get-Content desktop/frontend/package.json -Raw | ConvertFrom-Json
-          $lock = Get-Content desktop/frontend/package-lock.json -Raw | ConvertFrom-Json -AsHashtable
-          if ($package.version -ne $version -or $lock.version -ne $version -or $lock.packages.''.version -ne $version) {
-            throw 'Frontend package versions do not match tag'
-          }
       - name: Install frontend dependencies
         working-directory: desktop/frontend
         run: npm ci
       - name: Release notes from CHANGELOG.md
         shell: pwsh
-        run: scripts/release-notes.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v')) -Out (Join-Path $env:RUNNER_TEMP 'release-notes.md')
+        run: scripts/release-notes.ps1 -Version '${{ needs.validate.outputs.version }}' -Out dist/release-notes.md
       - name: Package the Windows desktop
         shell: pwsh
-        run: scripts/package-desktop.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v'))
+        run: scripts/package-desktop.ps1 -Version '${{ needs.validate.outputs.version }}'
       - name: Verify Go packages
+        shell: pwsh
         run: |
           go vet ./...
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -64,7 +78,7 @@ jobs:
       - name: Create the Windows archive
         shell: pwsh
         run: |
-          $version = '${{ github.ref_name }}'.TrimStart('v')
+          $version = '${{ needs.validate.outputs.version }}'
           $stageName = "MultiRoute-$version-windows"
           $stage = Join-Path dist $stageName
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
@@ -77,25 +91,170 @@ jobs:
           Copy-Item -LiteralPath LICENSE -Destination (Join-Path $stage 'LICENSE')
           Copy-Item -LiteralPath THIRD-PARTY-NOTICES.md -Destination (Join-Path $stage 'THIRD-PARTY-NOTICES.md')
           Compress-Archive -Path $stage -DestinationPath "dist\$stageName.zip"
-      - name: Publish release
-        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-desktop
+          path: |
+            dist/MultiRoute-${{ needs.validate.outputs.version }}-windows.zip
+            dist/release-notes.md
+
+  linux:
+    needs: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/frontend/package-lock.json
+      - name: Install desktop build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libayatana-appindicator3-dev libx11-dev
+      - name: Install frontend dependencies
+        working-directory: desktop/frontend
+        run: npm ci
+      - name: Build embedded frontend
+        working-directory: desktop/frontend
+        run: npm run build
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.41.3
+      - name: Package the Ubuntu desktop
+        run: bash scripts/package-desktop-linux.sh '${{ needs.validate.outputs.version }}' dist
+      - name: Verify the package and source provenance
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          set -eu
+          version='${{ needs.validate.outputs.version }}'
+          deb="dist/MultiRoute-$version-linux-amd64.deb"
+          dpkg-deb --info "$deb" | grep -q 'Architecture: amd64'
+          dpkg-deb --info "$deb" | grep -q 'libgtk-4-1'
+          dpkg-deb --info "$deb" | grep -q 'libwebkitgtk-6.0-4'
+          rm -rf /tmp/multiroute-deb && mkdir /tmp/multiroute-deb
+          dpkg-deb -x "$deb" /tmp/multiroute-deb
+          test -f /tmp/multiroute-deb/usr/bin/MultiRoute
+          test -f /tmp/multiroute-deb/usr/bin/MultiRouteNetwork
+          test -f /tmp/multiroute-deb/usr/lib/systemd/system/multiroute.service
+          for bin in MultiRoute MultiRouteNetwork; do
+            meta=$(go version -m "/tmp/multiroute-deb/usr/bin/$bin")
+            printf '%s' "$meta" | grep -q "vcs.revision=$EXPECTED_COMMIT"
+            printf '%s' "$meta" | grep -q 'vcs.modified=false'
+            "/tmp/multiroute-deb/usr/bin/$bin" version | grep -q "$version"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-desktop
+          path: dist/MultiRoute-${{ needs.validate.outputs.version }}-linux-amd64.deb
+
+  macos:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, amd64]
+    runs-on: macos-14
+    environment: desktop-signing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: desktop/frontend
+        run: npm ci
+      - name: Build embedded frontend
+        working-directory: desktop/frontend
+        run: npm run build
+      - name: Package the Mac desktop
+        run: bash scripts/package-desktop-macos.sh '${{ needs.validate.outputs.version }}' '${{ matrix.arch }}' dist
+      - name: Verify unsigned source provenance
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          set -eu
+          version='${{ needs.validate.outputs.version }}'
+          app=dist/MultiRoute.app
+          test "$(plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist")" = "dev.aristache.multiroute"
+          test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "$version"
+          for bin in MultiRoute MultiRouteNetwork; do
+            meta=$(go version -m "$app/Contents/MacOS/$bin")
+            printf '%s' "$meta" | grep -q "vcs.revision=$EXPECTED_COMMIT"
+            printf '%s' "$meta" | grep -q 'vcs.modified=false'
+            "$app/Contents/MacOS/$bin" version | grep -q "$version"
+          done
+          if [ '${{ matrix.arch }}' = amd64 ]; then expect=x86_64; else expect=arm64; fi
+          lipo -archs "$app/Contents/MacOS/MultiRoute" | grep -qx "$expect"
+      - name: Sign, notarize and create the disk image
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_BASE64 }}
+        run: bash scripts/sign-macos.sh dist/MultiRoute.app "dist/MultiRoute-${{ needs.validate.outputs.version }}-macos-${{ matrix.arch }}.dmg"
+      - name: Verify the signed disk image
+        run: |
+          set -eu
+          dmg="dist/MultiRoute-${{ needs.validate.outputs.version }}-macos-${{ matrix.arch }}.dmg"
+          codesign --verify --verbose=2 "$dmg"
+          xcrun stapler validate "$dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-desktop-${{ matrix.arch }}
+          path: dist/MultiRoute-${{ needs.validate.outputs.version }}-macos-${{ matrix.arch }}.dmg
+
+  publish:
+    needs: [validate, windows, linux, macos]
+    if: needs.windows.result == 'success' && needs.linux.result == 'success' && needs.macos.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish one release after every package
         env:
           GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ needs.validate.outputs.channel }}
         run: |
-          $tag = '${{ github.ref_name }}'
-          $version = $tag.TrimStart('v')
-          $title = "MultiRouteNetwork $version"
-          $zip = "dist/MultiRoute-$version-windows.zip"
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $zip --clobber
-            gh release edit $tag --title $title --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
-          } else {
-            gh release create $tag $zip --title $title --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
-          }
+          set -eu
+          tag="$GITHUB_REF_NAME"
+          version=${tag#v}
+          title="MultiRouteNetwork $version"
+          notes=$(find dist -name release-notes.md -print -quit)
+          test -n "$notes"
+          test -f "dist/MultiRoute-$version-windows.zip"
+          test -f "dist/MultiRoute-$version-linux-amd64.deb"
+          test -f "dist/MultiRoute-$version-macos-arm64.dmg"
+          test -f "dist/MultiRoute-$version-macos-amd64.dmg"
+          files=$(find dist -type f \( -name '*.zip' -o -name '*.deb' -o -name '*.dmg' \))
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" $files --clobber
+            if [ "$CHANNEL" = prerelease ]; then
+              gh release edit "$tag" --title "$title" --notes-file "$notes" --prerelease --latest=false
+            else
+              gh release edit "$tag" --title "$title" --notes-file "$notes" --latest
+            fi
+          elif [ "$CHANNEL" = prerelease ]; then
+            gh release create "$tag" $files --title "$title" --notes-file "$notes" --prerelease --latest=false
+          else
+            gh release create "$tag" $files --title "$title" --notes-file "$notes" --latest
+          fi
 
   aliases:
-    needs: release
+    needs: [validate, publish]
+    if: needs.validate.outputs.channel == 'stable'
     uses: ./.github/workflows/release-aliases.yml
     with:
       tag: ${{ github.ref_name }}

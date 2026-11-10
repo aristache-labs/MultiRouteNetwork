@@ -37,6 +37,7 @@ const usage = `MultiRouteNetwork: use all your network adapters at once.
   MultiRouteNetwork autostart on|off|status   start the tray at sign-in (Windows: no UAC prompt)
   MultiRouteNetwork cleanup    remove leftover routes after a crash (admin/root)
   MultiRouteNetwork install    macOS: sudo MultiRouteNetwork install lets the tray start without a password
+  MultiRouteNetwork service Linux and macOS: privileged desktop service, routing stays off until Start
   MultiRouteNetwork version
 
 Flags for run/socks: -include "WiFi,Ethernet 3"  -weight "Name=3"  -auto-weight=false  -stats 5s
@@ -223,7 +224,7 @@ func formatNICs(snap []engine.SlotStats) string {
 
 // Set at build time: -X main.version=... and, for the windowless tray build, -X main.defaultCmd=tray.
 var (
-	version    = "0.4.9"
+	version    = "0.5.0"
 	defaultCmd = ""
 )
 
@@ -278,6 +279,12 @@ func main() {
 		os.Exit(2)
 	case "run":
 		cmdRun(args)
+	case "service":
+		cmdService(args)
+	case "service-install":
+		cmdServiceInstall(args)
+	case "service-call":
+		cmdServiceCall(args)
 	case "on", "off", "quit":
 		cmdControl(cmd, args)
 	case "status":

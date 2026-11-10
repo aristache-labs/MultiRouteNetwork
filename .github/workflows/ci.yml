@@ -42,3 +42,24 @@ jobs:
           sudo ifconfig lo0 alias 127.0.0.3/32
       - run: go vet ./...
       - run: go test ./...
+
+  service-integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+          - os: macos-14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build the service
+        run: |
+          if [ "$(uname -s)" = Linux ]; then export CGO_ENABLED=0; fi
+          mkdir -p dist
+          go build -o dist/MultiRouteNetwork ./cmd/MultiRouteNetwork
+      - name: Exercise the privileged service with local traffic
+        run: sudo bash scripts/desktop-service-integration.sh dist/MultiRouteNetwork

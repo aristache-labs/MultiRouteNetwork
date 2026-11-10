@@ -30,11 +30,22 @@ func desktopTrayView(st *control.Status) trayView {
 		st = &control.Status{}
 	}
 	state, toggle := "Offline", "Start"
-	if st.Running {
-		state, toggle = "Online", "Stop"
-	}
-	if st.Starting {
-		state, toggle = "Starting…", "Starting…"
+	switch st.Service {
+	case control.ServiceUninstalled:
+		state = "Service not installed"
+	case control.ServiceAuthorization:
+		state = "Authorization required"
+	case control.ServiceStopped:
+		state = "Engine stopped"
+	case control.ServiceUnreachable:
+		state = "Communication error"
+	default:
+		if st.Running {
+			state, toggle = "Online", "Stop"
+		}
+		if st.Starting {
+			state, toggle = "Starting…", "Starting…"
+		}
 	}
 	v := trayView{header: fmt.Sprintf("%s · Total ↓ %s ↑ %s", state, trayRate(st.DownBps), trayRate(st.UpBps)), toggle: toggle, running: st.Running, starting: st.Starting}
 	adapters := append([]control.AdapterCard(nil), st.Adapters...)

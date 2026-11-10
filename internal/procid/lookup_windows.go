@@ -12,14 +12,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// Proc is the owner of a socket. Known is false when the table has no row or the process has exited.
-type Proc struct {
-	PID   uint32
-	Name  string
-	Path  string
-	Known bool
-}
-
 var (
 	iphlpapi             = syscall.NewLazyDLL("iphlpapi.dll")
 	procGetExtendedTcp   = iphlpapi.NewProc("GetExtendedTcpTable")

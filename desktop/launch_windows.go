@@ -8,6 +8,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+func serviceInstalled() bool { return false }
+
 func launchEngine() error {
 	path := enginePath()
 	if _, err := os.Stat(path); err != nil {

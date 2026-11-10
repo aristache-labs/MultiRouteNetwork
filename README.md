@@ -25,8 +25,8 @@
 ![Issues](https://shields.io/github/issues/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
 ![Watchers](https://shields.io/github/watchers/aristache-labs/MultiRouteNetwork?style=flat-square&labelColor=0f6e68&color=76f5e1)
 
-<strong>Windows desktop &middot; per-app routing &middot; multiple adapters &middot; local usage history &middot; dark and light themes</strong><br>
-<sub>Source version <b>0.4.9</b>. The GUI is MultiRoute; the routing engine is MultiRouteNetwork. CI builds the frontend and runs Go checks on Windows, Linux and macOS. Windows release builds verify that both executables come from the tagged commit with a clean source tree.</sub>
+<strong>Windows desktop &middot; experimental Ubuntu and macOS packages &middot; per-app routing &middot; local usage history</strong><br>
+<sub>Source version <b>0.5.0</b>. The GUI is MultiRoute; the routing engine is MultiRouteNetwork. Windows is the supported desktop. Ubuntu 24.04 x64 and macOS 14+ packages are an experimental prerelease: native tray, window and authorization checks are still outstanding.</sub>
 
 <br />
 
@@ -49,7 +49,7 @@ MultiRoute is a Windows desktop for routing applications over Ethernet, Wi-Fi an
 
 **One connection stays on one adapter.** Applications with multiple connections can use several adapters at once; a single TCP transfer is not split across links. Ethernet and Wi-Fi on the same router still share that router's internet capacity.
 
-The project builds on the MIT-licensed net-merge engine. The current Wails desktop package targets **Windows x64**. Cross-platform CI also checks the inherited engine and desktop compilation; it does not establish native desktop feature parity on Linux or macOS.
+The project builds on the MIT-licensed net-merge engine. The supported desktop package is **Windows x64**. Experimental packages also cover **Ubuntu 24.04 x64** and **macOS 14 or newer** on Apple Silicon and Intel. Those packages are not a completed native verification.
 
 ## Table of Contents
 
@@ -80,15 +80,15 @@ The project builds on the MIT-licensed net-merge engine. The current Wails deskt
 | --- | --- |
 | Desktop framework | Wails v3 |
 | Frontend | React 19, TypeScript, Vite, CSS |
-| Native webview | Microsoft WebView2 on Windows |
+| Native webview | Microsoft WebView2 on Windows; GTK 4 and WebKitGTK on Ubuntu; WKWebView on macOS |
 | Routing engine | Go, tun2socks and gVisor netstack |
-| Network device | Wintun on Windows |
-| GUI / engine transport | Per-user Windows named pipe through go-winio |
+| Network device | Wintun on Windows; TUN on Linux; utun on macOS |
+| GUI / engine transport | Per-user Windows named pipe; Unix socket to a root service on Linux and macOS |
 | Local storage | SQLite through modernc.org/sqlite |
 | Icons | Inline SVG controls and generated native MultiRoute icons |
 | Frontend package manager | npm |
 | Tests | Go tests, race detector, Node tests and offline Playwright checks |
-| Distribution | GitHub Actions builds a Windows x64 portable ZIP from a version tag |
+| Distribution | A version tag builds a Windows ZIP, an Ubuntu amd64 `.deb`, and signed macOS `.dmg` files. A prerelease does not replace Latest |
 
 ---
 
@@ -169,7 +169,7 @@ No API keys, external database or `.env` file are required for the desktop packa
 .\scripts\package-desktop.ps1
 ```
 
-This builds frontend assets and writes `MultiRoute.exe`, `MultiRouteNetwork.exe`, Wintun and package notices to `dist/multiroute`. It reads `VERSION`, currently **0.4.9**, and does not launch the GUI or install over an existing copy.
+This builds frontend assets and writes `MultiRoute.exe`, `MultiRouteNetwork.exe`, Wintun and package notices to `dist/multiroute`. It reads `VERSION`, currently **0.5.0**, and does not launch the GUI or install over an existing copy.
 
 ### 4. Verify locally
 
@@ -230,15 +230,17 @@ Rules can be edited while routing is stopped. Routing changes affect new connect
 
 ## Deployment
 
-Windows releases are built and published by [GitHub Actions](https://github.com/aristache-labs/MultiRouteNetwork/actions/workflows/release.yml) from a tag such as **`v0.4.9`**.
+Desktop packages are built by [GitHub Actions](https://github.com/aristache-labs/MultiRouteNetwork/actions/workflows/release.yml) from a tag such as **`v0.5.0`**.
 
-1. Synchronize `VERSION`, engine fallback, frontend package/lock versions and `CHANGELOG.md`.
-2. Build and test locally, commit the intended source and push the commit.
-3. Push the matching `vX.Y.Z` tag. The workflow validates versions, builds the package and runs Go checks.
-4. Both executables must identify the tagged commit with `vcs.modified=false` before the ZIP is published.
-5. The release contains a versioned Windows ZIP and the `MultiRoute-windows.zip` alias. The manual `verify-repos` workflow checks its required files and engine version without opening the GUI.
+1. Synchronize `VERSION`, engine and desktop fallbacks, frontend package/lock versions and `CHANGELOG.md`.
+2. Build and test locally, commit the intended source and push the commit. Do not start the GUI from the packaging scripts.
+3. Push the matching `vX.Y.Z` tag. The workflow validates versions and builds Windows, Ubuntu and macOS packages.
+4. Every published executable must identify the tagged commit with `vcs.modified=false`.
+5. While [packaging/release-channel](packaging/release-channel) says `prerelease`, the tag is published as a prerelease and does not replace the Latest Windows release. The stable alias job runs only after that file says `stable`.
 
-The release is portable Windows x64, not the inherited tray installer. Automatic in-app updating is not enabled. CI compilation on other platforms does not publish Linux/macOS desktop packages. Versions 0.4.0–0.4.5 remain retrospective source milestones, not invented historical releases.
+The Windows asset is a portable x64 ZIP. The Ubuntu asset is an amd64 `.deb` for 24.04 with a systemd service. The macOS assets are separate signed and notarized disk images for Apple Silicon and Intel, installed to `/Applications`. macOS signing uses the `desktop-signing` GitHub Environment (`APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_NOTARY_ISSUER_ID`, `APPLE_NOTARY_KEY_ID`, `APPLE_NOTARY_KEY_BASE64`). If those secrets are missing, the Mac jobs fail and nothing is published.
+
+The Ubuntu and macOS packages are experimental. Tray appearance, the window and the administrator prompt still need a check on those systems. Fedora, Linux ARM64, Homebrew and apt/dnf repositories are not in this version. Automatic in-app updating is not enabled. Versions 0.4.0–0.4.5 remain retrospective source milestones, not invented historical releases.
 
 ---
 

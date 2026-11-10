@@ -15,6 +15,10 @@ func TestDesktopTrayStates(t *testing.T) {
 		{nil, "Offline", "Start", false},
 		{&control.Status{Running: true}, "Online", "Stop", false},
 		{&control.Status{Starting: true}, "Starting…", "Starting…", true},
+		{&control.Status{Service: control.ServiceUninstalled}, "Service not installed", "Start", false},
+		{&control.Status{Service: control.ServiceAuthorization}, "Authorization required", "Start", false},
+		{&control.Status{Service: control.ServiceStopped}, "Engine stopped", "Start", false},
+		{&control.Status{Service: control.ServiceUnreachable}, "Communication error", "Start", false},
 	} {
 		v := desktopTrayView(tc.status)
 		if !strings.HasPrefix(v.header, tc.label) || v.toggle != tc.toggle || v.starting != tc.starting {

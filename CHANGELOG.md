@@ -1,7 +1,7 @@
 # Changelog
 
 Changes in MultiRouteNetwork, whose Windows desktop application is named MultiRoute.
-Current source version: **0.4.9**. See [README.md](README.md) for current behavior and limitations.
+Current source version: **0.5.0**. See [README.md](README.md) for current behavior and limitations.
 
 Versions **0.4.0–0.4.5** were documented retrospectively on **2026-11-10** to group
 work that accumulated after 0.3.7. Their dates record this documentation milestone,
@@ -11,6 +11,20 @@ references there to package hosts, upstream products or release availability are
 historical, not claims about this fork's infrastructure.
 
 ## [Unreleased]
+
+## [0.5.0] - 2026-11-10
+
+### Added
+- Experimental MultiRoute desktop packages for Ubuntu 24.04 x64 (`.deb`) and macOS 14+ (separate arm64 and Intel `.dmg` files).
+- A privileged service on Linux (systemd) and macOS (LaunchDaemon through Service Management). The desktop stays unelevated. Routing stays off until Start.
+- Per-application owner lookup on Linux and macOS, including process start time so a recycled PID is not reused. Unidentified traffic stays Unknown.
+- Unix-socket control authenticated with the kernel identity of one authorized user.
+
+### Changed
+- Version tags publish Windows, Ubuntu and macOS packages together. While `packaging/release-channel` is `prerelease`, the tag does not replace the Latest Windows release.
+- Exit on the service platforms stops routing and closes the window. The installed service process stays available.
+
+Native tray, window and authorization behavior on Ubuntu and both Mac architectures still needs a check on those systems. Fedora, Linux ARM64, Homebrew and apt/dnf repositories are not part of this version.
 
 ## [0.4.9] - 2026-11-10
 

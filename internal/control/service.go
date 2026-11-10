@@ -94,6 +94,9 @@ type Status struct {
 	Rules    []rules.Rule   `json:"rules"`
 	Settings store.Settings `json:"settings"`
 	Updated  time.Time      `json:"updated"`
+	// Service is set by the desktop when the privileged helper is missing or refused.
+	// Empty means this snapshot came from a live engine. Offline is then just routing stopped.
+	Service string `json:"service,omitempty"`
 }
 
 // Service is the shared controller for the tray, the CLI and the desktop window.
@@ -719,8 +722,20 @@ func (s *Service) Stop() {
 	s.paused.Store(false)
 }
 
-// Quit turns routing off and ends this process. Stop only pauses routing.
+// stayResident is set for the installed Linux and macOS service.
+// Quit then stops routing and leaves the process in place for the next Start.
+var stayResident atomic.Bool
+
+// EnableStayResident keeps Quit from exiting the process.
+func EnableStayResident() { stayResident.Store(true) }
+
+// Quit turns routing off. On Windows and the legacy commands it also exits.
+// The installed service stays running so the next Start can turn routing on again.
 func (s *Service) Quit() {
+	if stayResident.Load() {
+		s.Stop()
+		return
+	}
 	s.Shutdown()
 	os.Exit(0)
 }

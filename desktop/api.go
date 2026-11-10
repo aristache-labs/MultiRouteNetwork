@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -150,6 +151,11 @@ func (a *API) call(req control.Request) (control.Reply, error) {
 	conn, err := dial()
 	if err != nil {
 		if control.IsPipeAbsent(err) && !a.runningEngine() {
+			// The privileged service is the only writer on Linux and macOS.
+			// Tests pass an explicit directory and keep the offline Windows path.
+			if a.stateDir == "" && runtime.GOOS != "windows" {
+				return control.Reply{}, err
+			}
 			if req.Op == "putRule" || req.Op == "deleteRule" || req.Op == "putSettings" {
 				return control.LocalRules(a.dir(), req)
 			}
@@ -166,7 +172,10 @@ func (a *API) dir() string {
 	if a.stateDir != "" {
 		return a.stateDir
 	}
-	return state.DefaultDir()
+	if runtime.GOOS == "windows" {
+		return state.DefaultDir()
+	}
+	return state.ServiceDir()
 }
 
 func (a *API) runningEngine() bool {
@@ -177,18 +186,18 @@ func (a *API) runningEngine() bool {
 }
 
 func enginePath() string {
+	name := "MultiRouteNetwork"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
 	exe, err := os.Executable()
 	if err != nil {
-		return "MultiRouteNetwork.exe"
+		return name
 	}
-	next := filepath.Join(filepath.Dir(exe), "MultiRouteNetwork.exe")
-	if _, err := os.Stat(next); err == nil {
-		return next
-	}
-	return next
+	return filepath.Join(filepath.Dir(exe), name)
 }
 
-var errNoEngine = errors.New("MultiRouteNetwork.exe was not found next to MultiRoute")
+var errNoEngine = errors.New("MultiRouteNetwork was not found next to MultiRoute")
 
 func (a *API) updateAutostart(enabled bool) error {
 	if a.configureStartup != nil {

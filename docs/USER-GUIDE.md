@@ -27,9 +27,12 @@ can still appear in Usage. Multiple processes matching one application rule are
 aggregated; unidentified owners remain **Unknown** rather than being guessed.
 
 The underlying engine retains command-line/tray code for Windows, macOS and Linux.
-The Wails desktop and the recent buffer/lifecycle optimizations described here
-are Windows work; they do not establish equivalent desktop features or performance
-on other platforms. This repository does not contain an Android app.
+Version 0.5.0 also builds an experimental Wails desktop for Ubuntu 24.04 x64 and
+macOS 14 or newer. On those systems the window stays unelevated and talks to a
+root service over a Unix socket; routing stays off until Start. Native tray,
+window and authorization behavior has not been checked on those systems yet.
+This repository does not contain an Android app. Fedora, Linux ARM64, Homebrew
+and apt/dnf repositories are not part of this version.
 
 ## How routing works
 
@@ -195,7 +198,7 @@ npm ci
 npm run build
 Pop-Location
 
-go build -ldflags "-H=windowsgui -X main.version=0.4.9" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
+go build -ldflags "-H=windowsgui -X main.version=0.5.0" -o dist/multiroute/MultiRouteNetwork.exe ./cmd/MultiRouteNetwork
 go build -o dist/multiroute/MultiRoute.exe ./desktop
 ```
 
@@ -204,9 +207,9 @@ by default too. It recreates `dist` and requires Inno Setup; use the desktop
 packaging script for the Wails package. Building does not publish a release or
 replace an installed application. Keep license files with redistributed binaries.
 
-Linux/macOS engine build and packaging details remain in
-[DEVELOPING.md](DEVELOPING.md). Package-host and Homebrew publishing must be
-configured for this fork rather than inferred from the inherited changelog.
+Experimental Ubuntu and macOS desktop packages are built by the release workflow.
+The older engine packaging notes remain in [DEVELOPING.md](DEVELOPING.md).
+Homebrew and distribution package repositories are not published by this version.
 
 ## Diagnostics and performance
 

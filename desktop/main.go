@@ -14,12 +14,20 @@ import (
 
 	"MultiRouteNetwork/internal/control"
 	"MultiRouteNetwork/internal/icon"
+	"MultiRouteNetwork/internal/state"
 )
 
 //go:embed frontend/dist
 var dist embed.FS
 
+// Set at build time with -X main.version=...
+var version = "0.5.0"
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "version" {
+		fmt.Println("MultiRoute", version)
+		return
+	}
 	api := &API{}
 	sub, err := fs.Sub(dist, "frontend/dist")
 	if err != nil {
@@ -49,7 +57,7 @@ func main() {
 	})
 	quit := func() error {
 		_, err := api.call(control.Request{Op: "quit"})
-		if err != nil && !(control.IsPipeAbsent(err) && !api.runningEngine()) {
+		if err != nil && !control.IsPipeAbsent(err) && !control.IsAuthorization(err) && !control.IsEndpointDown(err) {
 			return fmt.Errorf("Could not stop the routing engine: %w", err)
 		}
 		api.quitting.Store(true)
@@ -57,7 +65,7 @@ func main() {
 		return nil
 	}
 	api.window = &windowControl{
-		dir:  api.dir(),
+		dir:  state.PreferenceDir(),
 		hide: func() { window.Hide() },
 		exit: quit,
 		prompt: func(message string) {

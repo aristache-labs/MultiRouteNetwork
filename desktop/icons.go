@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -13,10 +14,26 @@ var appIcons = struct {
 	images map[string][]byte
 }{images: make(map[string][]byte)}
 
+func executablePathAllowed(goos, path string) bool {
+	if path == "" || strings.Contains(path, "\x00") || strings.Contains(path, "://") {
+		return false
+	}
+	if strings.HasPrefix(path, `\\`) || strings.HasPrefix(path, `//`) {
+		return false
+	}
+	if goos == "windows" {
+		if len(path) < 3 || path[1] != ':' {
+			return false
+		}
+		return strings.EqualFold(filepath.Ext(path), ".exe")
+	}
+	return strings.HasPrefix(path, "/")
+}
+
 func serveAppIcon(w http.ResponseWriter, r *http.Request) {
 	path := filepath.Clean(r.URL.Query().Get("path"))
 	// Only read icons from local executables, never UNC shares, device paths or URLs.
-	if !filepath.IsAbs(path) || strings.HasPrefix(path, `\\`) || !strings.EqualFold(filepath.Ext(path), ".exe") {
+	if !executablePathAllowed(runtime.GOOS, path) {
 		http.NotFound(w, r)
 		return
 	}

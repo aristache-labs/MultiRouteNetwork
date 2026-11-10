@@ -61,3 +61,6 @@ func dialPipe(path string) (net.Conn, error) {
 func IsPipeAbsent(err error) bool {
 	return errors.Is(err, windows.ERROR_FILE_NOT_FOUND) || errors.Is(err, windows.ERROR_PATH_NOT_FOUND)
 }
+
+// IsEndpointDown is the unix "nothing is listening" case. Windows uses the pipe errors above.
+func IsEndpointDown(error) bool { return false }

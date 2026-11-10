@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"runtime"
 	"time"
 
 	"MultiRouteNetwork/internal/control"
@@ -80,9 +82,18 @@ func (a *API) decorateStatus(st *control.Status, pipeErr error) {
 	}
 	if a.startupError != "" {
 		st.Error = a.startupError
+		if runtime.GOOS != "windows" && control.IsAuthorization(errors.New(a.startupError)) {
+			st.Service = control.ServiceAuthorization
+		}
 		return
 	}
 	if pipeErr != nil && (!control.IsPipeAbsent(pipeErr) || a.runningEngine()) {
 		st.Error = "Cannot communicate with the routing engine. Close MultiRoute with Exit and reopen it."
+	}
+	if runtime.GOOS != "windows" && a.stateDir == "" && pipeErr != nil && !st.Starting {
+		st.Service = control.ServiceKind(serviceInstalled(), pipeErr)
+		if st.Service != "" {
+			st.Error = ""
+		}
 	}
 }

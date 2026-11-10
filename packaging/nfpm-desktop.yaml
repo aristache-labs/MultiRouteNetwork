@@ -1,0 +1,42 @@
+name: MultiRoute
+arch: amd64
+platform: linux
+version: ${VERSION}
+section: net
+priority: optional
+maintainer: Adrian Cristache
+homepage: https://github.com/aristache-labs/MultiRouteNetwork
+license: MIT
+description: |
+  Route applications across network adapters.
+  Experimental Ubuntu desktop build. Routing stays off until Start.
+contents:
+  - src: ./MultiRoute
+    dst: /usr/bin/MultiRoute
+    file_info:
+      mode: 0755
+  - src: ./MultiRouteNetwork
+    dst: /usr/bin/MultiRouteNetwork
+    file_info:
+      mode: 0755
+  - src: packaging/multiroute.service
+    dst: /usr/lib/systemd/system/multiroute.service
+  - src: packaging/dev.aristache.multiroute.desktop
+    dst: /usr/share/applications/dev.aristache.multiroute.desktop
+  - src: packaging/icons/hicolor
+    dst: /usr/share/icons/hicolor
+    type: tree
+  - src: LICENSE
+    dst: /usr/share/doc/MultiRoute/copyright
+  - src: THIRD-PARTY-NOTICES.md
+    dst: /usr/share/doc/MultiRoute/THIRD-PARTY-NOTICES.md
+scripts:
+  postinstall: packaging/desktop-postinstall.sh
+  preremove: packaging/desktop-preremove.sh
+  postremove: packaging/desktop-postremove.sh
+overrides:
+  deb:
+    depends:
+      - libgtk-4-1
+      - libwebkitgtk-6.0-4
+      - libayatana-appindicator3-1
